@@ -1597,6 +1597,27 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
     ),
   );
 
+  it.effect.each([
+    { name: "signed", signed: true, identity: undefined, hardenedRuntime: undefined },
+    { name: "unsigned", signed: false, identity: "-", hardenedRuntime: false },
+  ])("seals $name macOS builds", ({ signed, identity, hardenedRuntime }) =>
+    Effect.gen(function* () {
+      const config = yield* createBuildConfig(
+        "mac",
+        "dmg",
+        "1.2.3",
+        signed,
+        false,
+        undefined,
+        undefined,
+      );
+      const mac = config.mac as Record<string, unknown>;
+      assert.strictEqual(mac.identity, identity);
+      assert.strictEqual(mac.hardenedRuntime, hardenedRuntime);
+      assert.strictEqual(mac.sign !== undefined, signed);
+    }),
+  );
+
   it("parses Windows bsdtar member listings with CRLF line endings", () => {
     assert.deepStrictEqual(
       parseWslRuntimeArchiveMembers("./t3-1.2.3-linux-x64/t3\r\nt3-1.2.3-linux-x64/client/\r\n"),
