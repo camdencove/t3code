@@ -126,6 +126,11 @@ import {
   useThreadActions,
 } from "../hooks/useThreadActions";
 import { useHandleNewThread } from "../hooks/useHandleNewThread";
+import { WorkspaceSwitcher } from "../workspaces/WorkspaceSwitcher";
+import {
+  keepInActiveWorkspace,
+  useActiveWorkspaceEnvironmentIds,
+} from "../workspaces/activeWorkspace";
 import { useOrderWhileOpen } from "../hooks/useOrderWhileOpen";
 import { useProjectPin } from "../hooks/useProjectGroupUpdate";
 import { useSidebarProjectGroups } from "../hooks/useSidebarProjectGroups";
@@ -1117,7 +1122,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             ),
           ),
         );
-  const threads = useQuietThreadShells();
+  const activeWorkspaceEnvironmentIds = useActiveWorkspaceEnvironmentIds();
+  const threads = keepInActiveWorkspace(useQuietThreadShells(), activeWorkspaceEnvironmentIds);
   const routeRowThreadKey =
     routeThreadRef === null
       ? null
@@ -2991,6 +2997,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         className="min-h-full"
         fixedHeader={
           <SidebarGroup className="z-[1]">
+            {isElectron ? <WorkspaceSwitcher /> : null}
             <SidebarThreadHeader
               hasProjects={projectGroups.length > 0}
               projectScope={

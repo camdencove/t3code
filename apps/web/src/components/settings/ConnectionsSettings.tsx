@@ -41,6 +41,7 @@ import { EnvironmentIconMenu } from "./EnvironmentIconPicker";
 import { FoldedSettingsSection } from "./FoldedSettingsSection";
 import { LinkedEnvironmentsSettings } from "./LinkedEnvironmentsSettings";
 import { usePeerLinkHosts } from "~/state/peerLinks";
+import { isWorkspaceConnectionTarget } from "~/connection/desktopLocal";
 import { LoadBalancingSettings } from "./LoadBalancingSettings";
 import { PullRequestRoutingSettings } from "./PullRequestRoutingSettings";
 import { Input } from "../ui/input";
@@ -216,7 +217,11 @@ export function ConnectionsSettings({ view }: { readonly view: "environments" | 
   const loadBalancingEnvironments = [
     ...(primaryEnvironment ? [primaryEnvironment] : []),
     ...savedEnvironments.filter((environment) => environment.entry.enabled),
-  ].filter((environment) => environment.connection.phase !== "unsupported");
+  ].filter(
+    (environment) =>
+      environment.connection.phase !== "unsupported" &&
+      !isWorkspaceConnectionTarget(environment.entry.target),
+  );
   const [desktopServerExposureMutationError, setDesktopServerExposureMutationError] = useState<
     string | null
   >(null);

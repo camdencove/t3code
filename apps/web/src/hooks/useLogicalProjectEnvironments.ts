@@ -12,6 +12,10 @@ import {
   deriveLogicalProjectKeyFromSettings,
   selectProjectGroupingSettings,
 } from "@t3tools/client-runtime/state/project-grouping";
+import {
+  keepInActiveWorkspace,
+  useActiveWorkspaceEnvironmentIds,
+} from "../workspaces/activeWorkspace";
 import { useProjects } from "../state/entities";
 import { useEnvironments, usePrimaryEnvironmentId } from "../state/environments";
 import { useClientSettings } from "./useSettings";
@@ -21,6 +25,7 @@ export function useLogicalProjectEnvironments(
   scratchDraft: boolean,
 ): readonly EnvironmentOption[] {
   const { environments } = useEnvironments();
+  const activeWorkspaceEnvironmentIds = useActiveWorkspaceEnvironmentIds();
   const allProjects = useProjects();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
@@ -71,5 +76,7 @@ export function useLogicalProjectEnvironments(
     if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
     return a.label.localeCompare(b.label);
   });
-  return envs;
+  return activeWorkspaceEnvironmentIds?.has(activeProject.environmentId)
+    ? keepInActiveWorkspace(envs, activeWorkspaceEnvironmentIds)
+    : envs;
 }

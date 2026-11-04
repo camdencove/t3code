@@ -1,6 +1,7 @@
 import type { ConnectionTarget } from "@t3tools/client-runtime/connection";
 import {
   PRIMARY_LOCAL_ENVIRONMENT_ID,
+  WORKSPACE_BACKEND_ID_PREFIX,
   type DesktopBridge,
   type DesktopEnvironmentBootstrap,
 } from "@t3tools/contracts";
@@ -24,6 +25,10 @@ export function desktopLocalBackendId(target: ConnectionTarget): string | null {
   return isDesktopLocalConnectionTarget(target)
     ? target.connectionId.slice(DESKTOP_LOCAL_CONNECTION_ID_PREFIX.length)
     : null;
+}
+
+export function isWorkspaceConnectionTarget(target: ConnectionTarget): boolean {
+  return desktopLocalBackendId(target)?.startsWith(WORKSPACE_BACKEND_ID_PREFIX) === true;
 }
 
 export type DesktopSecondaryBootstrapsRead =

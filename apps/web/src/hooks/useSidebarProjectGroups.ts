@@ -8,9 +8,13 @@ import { useEnvironmentIdentities, usePrimaryEnvironmentId } from "../state/envi
 import { useDelegatedUnderParent, useProjects, useQuietThreadShells } from "../state/entities";
 import { legacyProjectCwdPreferenceKey, useUiStateStore } from "../uiStateStore";
 import { useClientSettings } from "./useSettings";
+import {
+  keepInActiveWorkspace,
+  useActiveWorkspaceEnvironmentIds,
+} from "../workspaces/activeWorkspace";
 
 export function useSidebarProjectGroups() {
-  const projects = useProjects();
+  const projects = keepInActiveWorkspace(useProjects(), useActiveWorkspaceEnvironmentIds());
   // Activity order lags a running thread's streaming ticks until its next
   // real change; reading every tick re-rendered the whole sidebar with it.
   const threads = useQuietThreadShells();

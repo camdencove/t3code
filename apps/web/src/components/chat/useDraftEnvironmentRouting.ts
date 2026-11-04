@@ -1,3 +1,4 @@
+import { isWorkspaceConnectionTarget } from "../../connection/desktopLocal";
 import { useLoadBalancedEnvironment } from "../../hooks/useLoadBalancedEnvironment";
 import { useLogicalProjectEnvironments } from "../../hooks/useLogicalProjectEnvironments";
 import { useScratchProject } from "../../hooks/useScratchProject";
@@ -80,6 +81,7 @@ export function useDraftEnvironmentRouting(input: DraftEnvironmentRoutingInput) 
           const environment = environmentById.get(candidate.environmentId);
           return (
             environment?.connection.phase === "connected" &&
+            !isWorkspaceConnectionTarget(environment.entry.target) &&
             (loadBalancingSettings.loadBalancingWeights[candidate.environmentId] ?? 50) > 0 &&
             referencedThreadContexts.every(
               (record) => record.environmentId === candidate.environmentId,

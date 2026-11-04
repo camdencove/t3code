@@ -17,6 +17,7 @@ import type { ResolvedSettingsScope } from "./settingsScope";
 
 export type SettingsPath =
   | "/settings/projects"
+  | "/settings/workspaces"
   | "/settings/general"
   | "/settings/diagnostics"
   | "/settings/appearance"
@@ -88,6 +89,7 @@ export interface SettingsSearchAvailability {
 export const SETTINGS_SECTION_LABELS: Readonly<Record<SettingsPath, string>> = {
   "/settings/diagnostics": "Diagnostics",
   "/settings/projects": "Projects",
+  "/settings/workspaces": "Workspaces",
   "/settings/general": "General",
   "/settings/appearance": "Appearance",
   "/settings/chat": "Chat",
@@ -138,7 +140,12 @@ export const SETTINGS_NAV_GROUPS: ReadonlyArray<{
   },
   {
     heading: "Code",
-    paths: ["/settings/projects", "/settings/source-control", "/settings/worktrees"],
+    paths: [
+      "/settings/projects",
+      ...(isElectron ? (["/settings/workspaces"] as const) : []),
+      "/settings/source-control",
+      "/settings/worktrees",
+    ],
   },
   {
     heading: "Connections",
@@ -758,6 +765,13 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["composer meter usage tokens circle old"],
   },
   {
+    id: "workspaces",
+    title: "Workspaces",
+    to: "/settings/workspaces",
+    searchTerms: ["shared logins claude token github gh mcp rename delete"],
+    desktopOnly: true,
+  },
+  {
     id: "keybindings",
     title: "Keybindings",
     to: "/settings/keybindings",
@@ -1194,6 +1208,7 @@ const SEARCH_ITEMS_BY_ID = new Map(SETTINGS_SEARCH_ITEMS.map((item) => [item.id,
 const SETTINGS_CATEGORY_SCOPES: Readonly<Record<SettingsPath, SettingsSearchScope | null>> = {
   "/settings/diagnostics": "environment",
   "/settings/projects": "project",
+  "/settings/workspaces": null,
   "/settings/general": null,
   "/settings/appearance": null,
   "/settings/chat": null,

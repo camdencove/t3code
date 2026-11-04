@@ -1,4 +1,8 @@
 import { threadPullRequestLinkMode } from "@t3tools/client-runtime/thread-pull-request-compatibility";
+import {
+  keepInActiveWorkspace,
+  useActiveWorkspaceEnvironmentIds,
+} from "../workspaces/activeWorkspace";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 
 import {
@@ -54,6 +58,7 @@ import {
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
+  BoxesIcon,
   BugIcon,
   ChartNoAxesColumnIcon,
   CheckIcon,
@@ -236,6 +241,10 @@ import {
 import { useCommandPaletteThreadItems } from "./CommandPaletteThreadItems";
 import { useCommandPaletteThemeItems } from "./CommandPaletteThemeItems";
 import {
+  SWITCH_WORKSPACE_GROUP,
+  useSwitchWorkspaceItem,
+} from "../workspaces/useSwitchWorkspaceItem";
+import {
   CommandPaletteVirtualizedResults,
   scrollCommandPaletteRowIntoView,
 } from "./CommandPaletteResults";
@@ -284,6 +293,11 @@ function openIntentView(intent: CommandPaletteOpenIntent | null): CommandPalette
       return {
         addonIcon: <PaletteIcon className={ADDON_ICON_CLASS} />,
         groups: [{ value: "themes", label: "Change theme", items: [] }],
+      };
+    case "switch-workspace":
+      return {
+        addonIcon: <BoxesIcon className={ADDON_ICON_CLASS} />,
+        groups: [{ value: SWITCH_WORKSPACE_GROUP, label: "Workspaces", items: [] }],
       };
     case "search":
     case undefined:
@@ -460,6 +474,7 @@ function OpenCommandPaletteDialog(props: {
   const { environments } = useEnvironments();
   const desktopLocalBootstraps = useDesktopLocalBootstraps();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
+  const activeWorkspaceEnvironmentIds = useActiveWorkspaceEnvironmentIds();
   const availableSettingsSearchItems = useAvailableSettingsSearchItems();
   const { activeDraftThread, activeThread, defaultProjectRef, handleNewThread } =
     useHandleNewThread();
@@ -501,6 +516,7 @@ function OpenCommandPaletteDialog(props: {
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const providersByEnvironment = useEnvironmentProviders();
   const { changeThemeItem, changeAppearanceItem, themeEditorItem } = useCommandPaletteThemeItems();
+  const switchWorkspaceItem = useSwitchWorkspaceItem();
   const currentView = viewStack.at(-1)?.view ?? null;
   const threadSearchQuery = currentView === null && !isActionsOnly ? deferredQuery : "";
   const [browseGeneration, setBrowseGeneration] = useState(0);
@@ -563,7 +579,7 @@ function OpenCommandPaletteDialog(props: {
   };
 
   const addProjectEnvironmentOptions = (() => {
-    const options = environments
+    const options = keepInActiveWorkspace(environments, activeWorkspaceEnvironmentIds)
       .filter((environment) => canCreateProjectInEnvironment(environment.connection.phase))
       .map((environment): AddProjectEnvironmentOption => {
         const isPrimary = environment.entry.target._tag === "PrimaryConnectionTarget";
@@ -1539,6 +1555,7 @@ function OpenCommandPaletteDialog(props: {
     });
   }
 
+  if (switchWorkspaceItem) actionItems.push(switchWorkspaceItem);
   actionItems.push(changeThemeItem);
   actionItems.push(changeAppearanceItem);
 
@@ -1713,7 +1730,9 @@ function OpenCommandPaletteDialog(props: {
             ? changeThemeItem.groups
             : currentView?.groups[0]?.value === "appearance"
               ? changeAppearanceItem.groups
-              : (currentView?.groups ?? rootGroups);
+              : currentView?.groups[0]?.value === SWITCH_WORKSPACE_GROUP
+                ? (switchWorkspaceItem?.groups ?? [])
+                : (currentView?.groups ?? rootGroups);
 
   const isLinkedThreadSearch =
     linkedThreadSearch?.linkedThreads !== undefined && deferredQuery === linkedThreadSearch.query;

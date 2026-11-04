@@ -1,4 +1,8 @@
 import {
+  keepInActiveWorkspace,
+  useActiveWorkspaceEnvironmentIds,
+} from "../workspaces/activeWorkspace";
+import {
   scopedProjectKey,
   scopeProjectRef,
   scopeThreadRef,
@@ -453,7 +457,7 @@ export function useHandleNewThread() {
         : useComposerDraftStore.getState().getDraftSession(routeTarget.draftId)
       : null,
   );
-  const projects = useProjects();
+  const projects = keepInActiveWorkspace(useProjects(), useActiveWorkspaceEnvironmentIds());
   const handleNewThread = useNewThreadHandler();
   const defaultProjectRef = resolveDefaultProjectRef(projects, projectOrder);
 

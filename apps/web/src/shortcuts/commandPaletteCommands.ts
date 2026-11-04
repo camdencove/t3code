@@ -9,6 +9,7 @@ import { overlayModeForCommand } from "../components/CommandPalette.logic";
 import { APPEARANCE_OPTIONS, notifyThemeSaveFailure } from "../components/CommandPaletteThemeItems";
 import { toggleThemeEditorForTheme } from "../components/settings/themeEditorStore";
 import { toastManager } from "../components/ui/toast";
+import { isElectron } from "../env";
 import { getThemeSnapshot, setAppearanceMode } from "../hooks/useTheme";
 import { selectActiveRightPanel, useRightPanelStore } from "../rightPanelStore";
 import { type CommandHandler, type CommandScopeOptions, registerCommands } from "./dispatcher";
@@ -81,6 +82,11 @@ export function installCommandPaletteCommands(
         consume(event);
         if (event.repeat) return;
         dispatchCommandPalette({ _tag: "OpenChangeTheme" });
+      },
+      "workspaces.switch": (event) => {
+        consume(event);
+        if (event.repeat || !isElectron) return;
+        dispatchCommandPalette({ _tag: "OpenSwitchWorkspace" });
       },
       "themeEditor.toggle": (event) => {
         consume(event);

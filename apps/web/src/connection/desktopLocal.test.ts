@@ -1,7 +1,27 @@
+import type { ConnectionTarget } from "@t3tools/client-runtime/connection";
 import { type DesktopEnvironmentBootstrap, PRIMARY_LOCAL_ENVIRONMENT_ID } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { createDesktopSecondaryBootstrapsReader } from "./desktopLocal";
+import {
+  createDesktopSecondaryBootstrapsReader,
+  isWorkspaceConnectionTarget,
+} from "./desktopLocal";
+
+describe("isWorkspaceConnectionTarget", () => {
+  it.each([
+    { name: "a workspace backend", connectionId: "local:workspace:alpha", expected: true },
+    { name: "a WSL backend", connectionId: "local:wsl:default", expected: false },
+    { name: "a remote connection", connectionId: "workspace:alpha", expected: false },
+  ])("classifies $name", ({ connectionId, expected }) => {
+    const target = { _tag: "BearerConnectionTarget", connectionId } as unknown as ConnectionTarget;
+    expect(isWorkspaceConnectionTarget(target)).toBe(expected);
+  });
+
+  it("does not classify the primary connection as a workspace", () => {
+    const target = { _tag: "PrimaryConnectionTarget" } as unknown as ConnectionTarget;
+    expect(isWorkspaceConnectionTarget(target)).toBe(false);
+  });
+});
 
 describe("desktop local topology reads", () => {
   it("reuses snapshots when polling returns fresh objects for the same topology", () => {
