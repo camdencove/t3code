@@ -1,3 +1,64 @@
+<div align="center">
+
+<img src="docs/assets/workspaces-switcher.svg" alt="The workspace switcher in the T3 Code sidebar" width="640">
+
+# T3 Code with Workspaces
+
+An unofficial fork of [T3 Code](https://github.com/pingdotgg/t3code) that gives every client or project its own threads and projects, on top of your normal setup.
+
+[![Latest release](https://img.shields.io/github/v/release/camdencove/t3code?label=release)](https://github.com/camdencove/t3code/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/camdencove/t3code)](./LICENSE)
+
+**[Download](https://github.com/camdencove/t3code/releases/latest)** · [Run it on a server](#run-it-on-a-server) · [Upstream docs](#t3-code)
+
+</div>
+
+## Workspaces
+
+If you work across several clients or companies, their threads should not share one pile. A workspace keeps them apart and inherits everything else from Default.
+
+- **Inherits by default.** Each workspace runs its own T3 Code server with its own projects and threads. It uses your existing logins, tools and MCP servers, and starts with a copy of your T3 Code settings, so it works straight away.
+- **Separate what you need.** Turn on separate Claude, Codex or GitHub CLI config under **Settings → Workspaces**, then sign in with that tool's own login command in a terminal in the workspace, such as `claude auth login`. Existing threads for that tool can't continue after you change this.
+- **Override anything else.** Add environment variables per workspace, such as `AWS_PROFILE` or `GIT_CONFIG_GLOBAL`.
+- **One click to switch.** Pick a workspace from the sidebar or the command palette, or press `mod+alt+w`. **All workspaces** shows everything at once. Every workspace starts with the app, so scheduled tasks keep running.
+- **No crossed wires.** New threads stay in the workspace you are in, and load balancing and PR routing leave workspaces out.
+
+To keep client MCP servers apart without a separate login, skip global servers and define them per project: `claude mcp add --scope local`, or a `.mcp.json` in the repo. A `.mcp.json` in a parent folder also works, but not in worktrees outside that folder.
+
+Only what you turn on is separate. Cursor, OpenCode, Grok, Kiro, Antigravity, your git identity and your SSH keys always come from your normal setup unless you override them with environment variables.
+
+Workspaces are a desktop app feature. They run on your machine only, so the mobile app and remote connections can't reach them.
+
+## Download
+
+Grab the installer for your machine from the [latest release](https://github.com/camdencove/t3code/releases/latest). Windows x64, macOS Apple Silicon and Linux (x64 and arm64) are all there.
+
+The builds are unsigned, so Windows and macOS will warn you the first time you open the app. On Windows choose **More info**, then **Run anyway**. On macOS allow it under **System Settings → Privacy & Security**.
+
+## Run it on a server
+
+The easy way is SSH from the desktop app. Open **Settings → Connections**, add an environment, choose **SSH** and enter your host, such as `user@example.com`. T3 Code installs the matching CLI on the server, starts it and forwards the port for you.
+
+To install the CLI yourself:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/camdencove/t3code/main/scripts/install.sh | sh
+```
+
+Then run `t3`. The server needs Linux or an Apple Silicon Mac, plus your agent's CLI signed in. The [remote access guide](./docs/user/remote-access.md) has the details.
+
+## How this fork differs
+
+- **T3 Connect is off.** It depends on T3's hosted services, so use SSH, your LAN or Tailscale.
+- **Telemetry works as it does upstream.** Set `T3CODE_TELEMETRY_ENABLED=false` to turn it off.
+- **Upstream changes come in by merge.** The fork stays a small set of commits on top of T3 Code.
+
+All credit for T3 Code goes to its [authors](https://github.com/pingdotgg/t3code). This fork is not affiliated with or supported by them, so please report fork issues [here](https://github.com/camdencove/t3code/issues). Released under the [MIT License](./LICENSE).
+
+---
+
+_The rest of this page is the upstream README. Its install commands and links point to the official T3 Code, without workspaces._
+
 # T3 Code
 
 T3 Code is an "agent harness control surface". It enables control of the agents on your machine with a best-in-class mobile app ([iOS](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824), [Android](https://play.google.com/store/apps/details?id=com.t3tools.t3code)), [web app](https://app.t3.codes) and [Electron-based desktop app](https://t3.codes).

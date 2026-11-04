@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="400" viewBox="0 0 760 400" role="img" aria-label="The workspace switcher open in the T3 Code sidebar, listing All workspaces, Default, Client work and Side projects">
+  <defs>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1d4ed8"/>
+      <stop offset="0.7" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#172554"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000"/>
+    </linearGradient>
+    <clipPath id="window"><rect x="1" y="1" width="758" height="398" rx="14"/></clipPath>
+    <style>
+      text { font-family: Inter, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #f4f4f5; font-size: 14px; font-weight: 500; }
+      .muted { fill: #a1a1aa; font-weight: 400; }
+      .title { font-size: 26px; font-weight: 700; }
+    </style>
+  </defs>
+  <g clip-path="url(#window)">
+    <rect width="760" height="400" fill="#000"/>
+    <rect width="250" height="400" fill="#0a0a0a"/>
+    <rect width="250" height="58" fill="url(#header)"/>
+    <rect y="18" width="250" height="40" fill="url(#fade)"/>
+    <line x1="250.5" y1="0" x2="250.5" y2="400" stroke="#27272a"/>
+    <text x="20" y="27" style="font-weight:700">T3 Code</text>
+
+    <rect x="10" y="48" width="230" height="34" rx="8" fill="#18181b" stroke="#27272a"/>
+    <circle cx="28" cy="65" r="6" fill="none" stroke="#f4f4f5" stroke-width="1.5"/>
+    <text x="42" y="70">Client work</text>
+    <path d="M222 62l4-4 4 4M222 68l4 4 4-4" fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <rect x="10" y="88" width="230" height="192" rx="10" fill="#111113" stroke="#27272a"/>
+    <text x="24" y="114">All workspaces</text>
+    <text x="24" y="142">Default</text>
+    <rect x="15" y="151" width="220" height="28" rx="6" fill="#27272a"/>
+    <text x="24" y="170">Client work</text>
+    <path d="M216 165l4 4 8-8" fill="none" stroke="#f4f4f5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="24" y="198">Side projects</text>
+    <line x1="22" y1="211" x2="228" y2="211" stroke="#27272a"/>
+    <path d="M24 232h10M29 227v10" stroke="#a1a1aa" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="44" y="237">New workspace</text>
+    <circle cx="29" cy="261" r="4.5" fill="none" stroke="#a1a1aa" stroke-width="1.5"/>
+    <text x="44" y="266">Manage workspaces</text>
+
+    <text x="505" y="186" text-anchor="middle" class="title">What should we work on?</text>
+    <text x="505" y="212" text-anchor="middle" class="muted">Add a project, or start without one.</text>
+    <rect x="394" y="232" width="104" height="30" rx="7" fill="#2563eb"/>
+    <text x="446" y="252" text-anchor="middle">Add project</text>
+    <rect x="506" y="232" width="124" height="30" rx="7" fill="none" stroke="#3f3f46"/>
+    <text x="568" y="252" text-anchor="middle">Without a project</text>
+  </g>
+  <rect x="0.5" y="0.5" width="759" height="399" rx="14" fill="none" stroke="#27272a"/>
+</svg>
