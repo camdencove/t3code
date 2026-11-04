@@ -2856,7 +2856,10 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
           role: "Viewer",
         },
       ],
-      ...(signed ? { sign: path.join(repoRoot, "scripts/sign-macos.ts") } : {}),
+      // macOS calls a downloaded app with no sealed signature damaged and offers no Open Anyway.
+      ...(signed
+        ? { sign: path.join(repoRoot, "scripts/sign-macos.ts") }
+        : { identity: "-", hardenedRuntime: false }),
       ...(macPasskeySigning
         ? {
             entitlements: macPasskeySigning.entitlementsPath,
