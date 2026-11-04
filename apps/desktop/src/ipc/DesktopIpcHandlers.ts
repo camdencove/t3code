@@ -75,6 +75,13 @@ import {
 } from "./methods/legacyLocalStorage.ts";
 import { getWslState, setWslBackendEnabled, setWslDistro, setWslOnly } from "./methods/wsl.ts";
 import {
+  createWorkspace,
+  getWorkspaces,
+  openWorkspace,
+  removeWorkspace,
+  updateWorkspace,
+} from "./methods/workspaces.ts";
+import {
   getCliCommandState,
   installCliCommand,
   uninstallCliCommand,
@@ -135,6 +142,11 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   yield* ipc.handle(setWslBackendEnabled);
   yield* ipc.handle(setWslDistro);
   yield* ipc.handle(setWslOnly);
+  yield* ipc.handleSync(getWorkspaces);
+  yield* ipc.handle(createWorkspace);
+  yield* ipc.handle(openWorkspace);
+  yield* ipc.handle(updateWorkspace);
+  yield* ipc.handle(removeWorkspace);
 
   yield* ipc.handle(pickFolder);
   yield* ipc.handle(pickProjectFavicon);

@@ -19,6 +19,7 @@ import * as DesktopApplicationMenu from "../window/DesktopApplicationMenu.ts";
 import * as DesktopWindow from "../window/DesktopWindow.ts";
 import * as PreviewPasskeys from "../preview/Passkeys.ts";
 import * as DesktopBackendPool from "../backend/DesktopBackendPool.ts";
+import * as DesktopWorkspaces from "../workspaces/DesktopWorkspaces.ts";
 import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import * as DesktopLegacyLocalStorage from "./DesktopLegacyLocalStorage.ts";
 import * as DesktopLifecycle from "./DesktopLifecycle.ts";
@@ -199,6 +200,7 @@ const bootstrap = Effect.gen(function* () {
   const primaryBackend = yield* pool.primary;
   const serverExposure = yield* DesktopServerExposure.DesktopServerExposure;
   const wslBackend = yield* DesktopWslBackend.DesktopWslBackend;
+  const workspaces = yield* DesktopWorkspaces.DesktopWorkspaces;
 
   if (environment.isDevelopment && Option.isNone(environment.configuredBackendPort)) {
     return yield* new DesktopDevelopmentBackendPortRequiredError();
@@ -260,6 +262,7 @@ const bootstrap = Effect.gen(function* () {
       Effect.catch((error) => logStartupError("desktop app control socket unavailable", { error })),
     );
     yield* Effect.forkScoped(wslBackend.reconcile);
+    yield* Effect.forkScoped(workspaces.startAll);
   }
 }).pipe(Effect.withSpan("desktop.bootstrap"));
 

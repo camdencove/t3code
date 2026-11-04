@@ -1,5 +1,6 @@
 import * as NodeOS from "node:os";
 
+import type { DesktopWorkspace } from "@t3tools/contracts";
 import { parsePersistedServerObservabilitySettings } from "@t3tools/shared/serverSettings";
 import { currentDesktopBootstrapToken } from "@t3tools/shared/desktopBootstrapToken";
 import * as Clock from "effect/Clock";
@@ -24,6 +25,7 @@ import * as DesktopShellEnvironment from "../shell/DesktopShellEnvironment.ts";
 import * as DesktopAppSettings from "../settings/DesktopAppSettings.ts";
 import * as DesktopWslEnvironment from "../wsl/DesktopWslEnvironment.ts";
 import * as DesktopWslServerTree from "../wsl/DesktopWslServerTree.ts";
+import { workspaceBackendEnv } from "../workspaces/workspaceBackendEnv.ts";
 
 export class DesktopBackendObservabilitySettingsReadError extends Schema.TaggedError<DesktopBackendObservabilitySettingsReadError>()(
   "DesktopBackendObservabilitySettingsReadError",
@@ -47,6 +49,14 @@ export class DesktopBackendConfiguration extends Context.Service<
     readonly resolveWsl: (input: {
       readonly port: number;
       readonly distro: string | null;
+    }) => Effect.Effect<
+      DesktopBackendManager.DesktopBackendStartConfig,
+      PlatformError.PlatformError
+    >;
+    readonly resolveWorkspace: (input: {
+      readonly port: number;
+      readonly workspaceDir: string;
+      readonly workspace: DesktopWorkspace;
     }) => Effect.Effect<
       DesktopBackendManager.DesktopBackendStartConfig,
       PlatformError.PlatformError
@@ -830,6 +840,35 @@ export const make = Effect.gen(function* () {
       }
       return distro ? `WSL (${distro})` : "WSL";
     }).pipe(Effect.withSpan("desktop.backendConfiguration.resolvePrimaryLabel")),
+    resolveWorkspace: Effect.fn("desktop.backendConfiguration.resolveWorkspace")(function* (input) {
+      const primary = yield* buildWindowsPrimaryConfig;
+      const {
+        desktopTelemetryFd: _desktopTelemetryFd,
+        desktopTelemetryControlFd: _desktopTelemetryControlFd,
+        desktopBrowserFd: _desktopBrowserFd,
+        desktopBrowserControlFd: _desktopBrowserControlFd,
+        ...bootstrap
+      } = primary.bootstrap;
+      const workspacePath = (name: string) => environment.path.join(input.workspaceDir, name);
+      return {
+        ...primary,
+        env: {
+          ...primary.env,
+          ...workspaceBackendEnv({
+            workspacePath,
+            workspace: input.workspace,
+          }),
+        },
+        bootstrap: {
+          ...bootstrap,
+          port: input.port,
+          host: "127.0.0.1",
+          t3Home: workspacePath("t3"),
+          tailscaleServeEnabled: false,
+        },
+        httpBaseUrl: new URL(`http://127.0.0.1:${input.port}`),
+      };
+    }),
     // The span options depend on each request's port and distro.
     resolveWsl: Effect.fnUntraced(
       function* (input) {

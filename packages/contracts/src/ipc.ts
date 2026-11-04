@@ -1,3 +1,4 @@
+import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import type { PreviewCaptureFailureEncoded } from "./previewCapture.ts";
 
@@ -382,6 +383,23 @@ export const DesktopEnvironmentBootstrapSchema = Schema.Struct({
   wsBaseUrl: Schema.NullOr(Schema.String),
   bootstrapToken: Schema.optionalKey(Schema.String),
 });
+
+export const WORKSPACE_BACKEND_ID_PREFIX = "workspace:";
+
+export const DesktopWorkspaceToolSchema = Schema.Literals(["claude", "codex", "github"]);
+export type DesktopWorkspaceTool = typeof DesktopWorkspaceToolSchema.Type;
+
+export const DesktopWorkspaceSchema = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  separate: Schema.Array(DesktopWorkspaceToolSchema).pipe(
+    Schema.withDecodingDefault(Effect.succeed([])),
+  ),
+  env: Schema.Record(Schema.String, Schema.String).pipe(
+    Schema.withDecodingDefault(Effect.succeed({})),
+  ),
+});
+export type DesktopWorkspace = typeof DesktopWorkspaceSchema.Type;
 
 export const DesktopSshEnvironmentTargetSchema = Schema.Struct({
   alias: Schema.String,
@@ -1091,6 +1109,11 @@ export interface DesktopBridge {
     readonly port?: number;
   }) => Promise<DesktopServerExposureState>;
   getAdvertisedEndpoints: () => Promise<readonly AdvertisedEndpoint[]>;
+  getWorkspaces: () => readonly DesktopWorkspace[];
+  createWorkspace: (input: { readonly name: string }) => Promise<readonly DesktopWorkspace[]>;
+  updateWorkspace: (workspace: DesktopWorkspace) => Promise<readonly DesktopWorkspace[]>;
+  removeWorkspace: (id: string) => Promise<readonly DesktopWorkspace[]>;
+  openWorkspace: (id: string) => Promise<void>;
   getWslState: () => Promise<DesktopWslState>;
   setWslBackendEnabled: (enabled: boolean) => Promise<DesktopWslState>;
   setWslDistro: (distro: string | null) => Promise<DesktopWslState>;

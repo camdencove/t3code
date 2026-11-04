@@ -182,6 +182,17 @@ contextBridge.exposeInMainWorld("desktopBridge", {
   setTailscaleServeEnabled: (input) =>
     ipcRenderer.invoke(IpcChannels.SET_TAILSCALE_SERVE_ENABLED_CHANNEL, input),
   getAdvertisedEndpoints: () => ipcRenderer.invoke(IpcChannels.GET_ADVERTISED_ENDPOINTS_CHANNEL),
+  getWorkspaces: () => {
+    const result = ipcRenderer.sendSync(IpcChannels.GET_WORKSPACES_CHANNEL);
+    if (!Array.isArray(result)) {
+      return [];
+    }
+    return result as ReturnType<DesktopBridge["getWorkspaces"]>;
+  },
+  createWorkspace: (input) => ipcRenderer.invoke(IpcChannels.CREATE_WORKSPACE_CHANNEL, input),
+  updateWorkspace: (input) => ipcRenderer.invoke(IpcChannels.UPDATE_WORKSPACE_CHANNEL, input),
+  removeWorkspace: (id) => ipcRenderer.invoke(IpcChannels.REMOVE_WORKSPACE_CHANNEL, id),
+  openWorkspace: (id) => ipcRenderer.invoke(IpcChannels.OPEN_WORKSPACE_CHANNEL, id),
   getWslState: () => ipcRenderer.invoke(IpcChannels.GET_WSL_STATE_CHANNEL),
   setWslBackendEnabled: (enabled) =>
     ipcRenderer.invoke(IpcChannels.SET_WSL_BACKEND_ENABLED_CHANNEL, enabled),
