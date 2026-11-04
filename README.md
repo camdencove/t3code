@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/workspaces-switcher.svg" alt="The workspace switcher in the T3 Code sidebar" width="640">
+<img src="docs/assets/workspaces-switcher.svg" alt="The workspace switcher in the T3 Code sidebar, with an icon for each workspace and waiting workspaces shown on the closed switcher" width="640">
 
 # T3 Code with Workspaces
 

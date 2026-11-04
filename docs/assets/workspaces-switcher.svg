@@ -1,5 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="400" viewBox="0 0 760 400" role="img" aria-label="The workspace switcher open in the T3 Code sidebar, listing All workspaces, Default, Client work and Side projects">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="400" viewBox="0 0 760 400" role="img" aria-label="The workspace switcher open in the T3 Code sidebar, with an icon for each workspace and icons on the closed switcher showing which workspaces are waiting on you">
   <defs>
+    <symbol id="terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19h8"/><path d="m4 17 6-6-6-6"/></symbol>
+    <symbol id="castle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5V3"/><path d="M14 5V3"/><path d="M15 21v-3a3 3 0 0 0-6 0v3"/><path d="M18 3v8"/><path d="M18 5H6"/><path d="M22 11H2"/><path d="M22 9v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9"/><path d="M6 3v8"/></symbol>
+    <symbol id="wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+    <symbol id="rocket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></symbol>
+    <symbol id="code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></symbol>
+    <symbol id="chevrons" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    <symbol id="settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 17H5"/><path d="M19 7h-9"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
     <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#1d4ed8"/>
       <stop offset="0.7" stop-color="#3b82f6"/>
@@ -25,22 +34,36 @@
     <text x="20" y="27" style="font-weight:700">T3 Code</text>
 
     <rect x="10" y="48" width="230" height="34" rx="8" fill="#18181b" stroke="#27272a"/>
-    <circle cx="28" cy="65" r="6" fill="none" stroke="#f4f4f5" stroke-width="1.5"/>
-    <text x="42" y="70">Client work</text>
-    <path d="M222 62l4-4 4 4M222 68l4 4 4-4" fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <use href="#castle" x="20" y="57" width="16" height="16" color="#fbbf24"/>
+    <text x="44" y="70">Acme Studios</text>
+    <circle cx="198" cy="65" r="10" fill="#18181b" stroke="#3f3f46"/>
+    <use href="#wallet" x="192" y="59" width="12" height="12" color="#a78bfa"/>
+    <circle cx="205" cy="72" r="3.5" fill="#10b981" stroke="#18181b" stroke-width="2"/>
+    <circle cx="182" cy="65" r="10" fill="#18181b" stroke="#3f3f46"/>
+    <use href="#rocket" x="176" y="59" width="12" height="12" color="#fb7185"/>
+    <circle cx="189" cy="72" r="3.5" fill="#f59e0b" stroke="#18181b" stroke-width="2"/>
+    <use href="#chevrons" x="219" y="58" width="14" height="14" color="#a1a1aa"/>
 
-    <rect x="10" y="88" width="230" height="192" rx="10" fill="#111113" stroke="#27272a"/>
-    <text x="24" y="114">All workspaces</text>
-    <text x="24" y="142">Default</text>
-    <rect x="15" y="151" width="220" height="28" rx="6" fill="#27272a"/>
-    <text x="24" y="170">Client work</text>
-    <path d="M216 165l4 4 8-8" fill="none" stroke="#f4f4f5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="24" y="198">Side projects</text>
-    <line x1="22" y1="211" x2="228" y2="211" stroke="#27272a"/>
-    <path d="M24 232h10M29 227v10" stroke="#a1a1aa" stroke-width="1.5" stroke-linecap="round"/>
-    <text x="44" y="237">New workspace</text>
-    <circle cx="29" cy="261" r="4.5" fill="none" stroke="#a1a1aa" stroke-width="1.5"/>
-    <text x="44" y="266">Manage workspaces</text>
+    <rect x="10" y="88" width="230" height="220" rx="10" fill="#111113" stroke="#27272a"/>
+    <use href="#terminal" x="24" y="101" width="16" height="16" color="#38bdf8"/>
+    <text x="48" y="114">All workspaces</text>
+    <rect x="15" y="123" width="220" height="28" rx="6" fill="#27272a"/>
+    <use href="#castle" x="24" y="129" width="16" height="16" color="#fbbf24"/>
+    <text x="48" y="142">Acme Studios</text>
+    <use href="#check" x="214" y="130" width="14" height="14" color="#f4f4f5"/>
+    <use href="#wallet" x="24" y="157" width="16" height="16" color="#a78bfa"/>
+    <text x="48" y="170">Globex</text>
+    <circle cx="221" cy="165" r="4" fill="#10b981"/>
+    <use href="#rocket" x="24" y="185" width="16" height="16" color="#fb7185"/>
+    <text x="48" y="198">Northwind</text>
+    <circle cx="221" cy="193" r="4" fill="#f59e0b"/>
+    <use href="#code" x="24" y="213" width="16" height="16" color="#e879f9"/>
+    <text x="48" y="226">Personal Projects</text>
+    <line x1="22" y1="239" x2="228" y2="239" stroke="#27272a"/>
+    <use href="#plus" x="24" y="252" width="16" height="16" color="#a1a1aa"/>
+    <text x="48" y="265">New workspace</text>
+    <use href="#settings" x="24" y="280" width="16" height="16" color="#a1a1aa"/>
+    <text x="48" y="293">Manage workspaces</text>
 
     <text x="505" y="186" text-anchor="middle" class="title">What should we work on?</text>
     <text x="505" y="212" text-anchor="middle" class="muted">Add a project, or start without one.</text>
