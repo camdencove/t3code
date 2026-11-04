@@ -1,3 +1,4 @@
+import { WORKSPACE_JUMP_KEYBINDING_COMMANDS } from "@t3tools/contracts";
 import { BoxesIcon } from "lucide-react";
 
 import {
@@ -9,14 +10,14 @@ import { isElectron } from "../env";
 import {
   useActiveWorkspaceBackendId,
   useSelectWorkspace,
-  workspaceOptions,
+  useWorkspaceOptions,
 } from "./activeWorkspace";
-import { useWorkspacesStore } from "./workspacesStore";
+import { WorkspaceIcon } from "./WorkspaceIcon";
 
 export const SWITCH_WORKSPACE_GROUP = "workspaces";
 
 export function useSwitchWorkspaceItem(): CommandPaletteSubmenuItem | null {
-  const workspaces = useWorkspacesStore((store) => store.workspaces);
+  const options = useWorkspaceOptions();
   const [activeBackendId] = useActiveWorkspaceBackendId();
   const selectWorkspace = useSelectWorkspace();
   if (!isElectron) return null;
@@ -33,17 +34,22 @@ export function useSwitchWorkspaceItem(): CommandPaletteSubmenuItem | null {
       {
         value: SWITCH_WORKSPACE_GROUP,
         label: "Workspaces",
-        items: workspaceOptions(workspaces).map(({ backendId, label }) => ({
+        items: options.map((option, index) => ({
           kind: "action",
-          value: `workspace:${backendId ?? "all"}`,
-          title: label,
-          searchTerms: [label, "workspace"],
-          icon: <BoxesIcon className={ITEM_ICON_CLASS} />,
+          value: `workspace:${option.backendId ?? "all"}`,
+          title: option.label,
+          searchTerms: [option.label, "workspace"],
+          ...(WORKSPACE_JUMP_KEYBINDING_COMMANDS[index]
+            ? { shortcutCommand: WORKSPACE_JUMP_KEYBINDING_COMMANDS[index] }
+            : {}),
+          icon: (
+            <WorkspaceIcon option={option} fallback={<BoxesIcon className={ITEM_ICON_CLASS} />} />
+          ),
           titleTrailingContent:
-            backendId === activeBackendId ? (
+            option.backendId === activeBackendId ? (
               <span className="text-xs text-muted-foreground/70">Current</span>
             ) : undefined,
-          run: async () => selectWorkspace(backendId),
+          run: async () => selectWorkspace(option.backendId),
         })),
       },
     ],

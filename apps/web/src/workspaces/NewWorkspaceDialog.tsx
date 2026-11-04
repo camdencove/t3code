@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
+import { useDefaultWorkspaceLabel } from "./activeWorkspace";
 import { toastManager } from "../components/ui/toast";
 import { useWorkspacesStore } from "./workspacesStore";
 
@@ -24,6 +25,7 @@ export function NewWorkspaceDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: (backendId: string) => void;
 }) {
+  const defaultLabel = useDefaultWorkspaceLabel();
   const setWorkspaces = useWorkspacesStore((store) => store.setWorkspaces);
   const [name, setName] = useState("");
 
@@ -54,8 +56,8 @@ export function NewWorkspaceDialog({
           <DialogHeader>
             <DialogTitle>New workspace</DialogTitle>
             <DialogDescription>
-              Gets its own threads and projects. Logins, tools and settings come from Default, and
-              you can separate them in Settings.
+              Gets its own threads and projects. Logins, tools and settings come from {defaultLabel}
+              , and you can separate them in Settings.
             </DialogDescription>
           </DialogHeader>
           <DialogPanel>

@@ -13,6 +13,7 @@ import type {
 import { AuthAccessTokenResult, AuthSessionState } from "./auth.ts";
 import { AdvertisedEndpoint } from "./remoteAccess.ts";
 import { ExecutionEnvironmentDescriptor } from "./environment.ts";
+import { ReceivedProjectIcon } from "./project.ts";
 import { type ClientSettings, type QuitConfirmationMode, SnapShotShortcut } from "./settings.ts";
 import type { EditorId } from "./editor.ts";
 import type { PreviewForwardedShortcut } from "./keybindings.ts";
@@ -398,6 +399,7 @@ export const DesktopWorkspaceSchema = Schema.Struct({
   env: Schema.Record(Schema.String, Schema.String).pipe(
     Schema.withDecodingDefault(Effect.succeed({})),
   ),
+  icon: Schema.NullOr(ReceivedProjectIcon).pipe(Schema.withDecodingDefault(Effect.succeed(null))),
 });
 export type DesktopWorkspace = typeof DesktopWorkspaceSchema.Type;
 

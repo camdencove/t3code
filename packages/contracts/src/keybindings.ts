@@ -20,6 +20,18 @@ export const THREAD_JUMP_KEYBINDING_COMMANDS = [
 ] as const;
 export type ThreadJumpKeybindingCommand = (typeof THREAD_JUMP_KEYBINDING_COMMANDS)[number];
 
+export const WORKSPACE_JUMP_KEYBINDING_COMMANDS = [
+  "workspaces.jump.1",
+  "workspaces.jump.2",
+  "workspaces.jump.3",
+  "workspaces.jump.4",
+  "workspaces.jump.5",
+  "workspaces.jump.6",
+  "workspaces.jump.7",
+  "workspaces.jump.8",
+  "workspaces.jump.9",
+] as const;
+
 export const MODEL_PICKER_JUMP_KEYBINDING_COMMANDS = [
   "modelPicker.jump.1",
   "modelPicker.jump.2",
@@ -85,6 +97,8 @@ export const STATIC_KEYBINDING_COMMANDS = [
   "usage.open",
   "theme.select",
   "workspaces.switch",
+  "workspaces.nextWaiting",
+  ...WORKSPACE_JUMP_KEYBINDING_COMMANDS,
   "appearance.cycle",
   "themeEditor.toggle",
   "composer.stash",

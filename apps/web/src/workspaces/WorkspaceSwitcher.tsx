@@ -23,14 +23,35 @@ import { cn } from "../lib/utils";
 import {
   useActiveWorkspaceBackendId,
   useSelectWorkspace,
-  workspaceColorClass,
-  workspaceOptions,
+  useWorkspaceOptions,
   type WorkspaceOption,
 } from "./activeWorkspace";
 import { NewWorkspaceDialog } from "./NewWorkspaceDialog";
+import {
+  rankWaitingWorkspaces,
+  resolveWaitingWorkspaces,
+  useWaitingScope,
+  type WaitingDot as WaitingDotKind,
+} from "./waitingWorkspaces";
+import { WorkspaceIcon } from "./WorkspaceIcon";
+import { WorkspaceShortcuts } from "./WorkspaceShortcuts";
 import { useWorkspacesStore } from "./workspacesStore";
 
 const ALL_WORKSPACES_VALUE = "all";
+
+const WAITING_STACK_LIMIT = 3;
+
+const WAITING_DOT_CLASS_NAME: Record<WaitingDotKind, string> = {
+  attention: "bg-warning",
+  failed: "bg-error",
+  unread: "bg-success",
+};
+
+const WAITING_DOT_LABEL: Record<WaitingDotKind, string> = {
+  attention: "Needs you",
+  failed: "Failed",
+  unread: "Done, unread",
+};
 
 function openWorkspaceOrOfferRetry(
   bridge: DesktopBridge,
@@ -55,25 +76,74 @@ function openWorkspaceOrOfferRetry(
   );
 }
 
-function WorkspaceColorDot({ workspaceId }: { workspaceId: string }) {
+function WaitingDot({ dot }: { dot: WaitingDotKind }) {
   return (
     <span
-      aria-hidden
-      className={cn("size-2.5 shrink-0 rounded-full", workspaceColorClass(workspaceId))}
+      role="img"
+      aria-label={WAITING_DOT_LABEL[dot]}
+      className={cn("size-2 shrink-0 rounded-full", WAITING_DOT_CLASS_NAME[dot])}
     />
   );
 }
 
-function WorkspaceRadioLabel({ option }: { option: WorkspaceOption }) {
+function WaitingWorkspaceStack({
+  waiting,
+}: {
+  waiting: ReadonlyArray<{ readonly option: WorkspaceOption; readonly dot: WaitingDotKind }>;
+}) {
+  const hiddenCount = waiting.length - WAITING_STACK_LIMIT;
+  return (
+    <span className="flex shrink-0 items-center gap-1">
+      {/* Painted in reverse so each icon overlaps the next and keeps its status corner visible. */}
+      <span className="flex flex-row-reverse items-center">
+        {waiting
+          .slice(0, WAITING_STACK_LIMIT)
+          .toReversed()
+          .map(({ option, dot }) => (
+            <span
+              key={option.backendId ?? ALL_WORKSPACES_VALUE}
+              role="img"
+              aria-label={`${option.label}: ${WAITING_DOT_LABEL[dot]}`}
+              className="relative -ml-1.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-sidebar ring-1 ring-border last:ml-0"
+            >
+              <WorkspaceIcon
+                option={option}
+                fallback={<BoxesIcon className="size-3.5 text-(--sidebar-icon-color)" />}
+              />
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute -right-0.5 -bottom-0.5 size-2 rounded-full ring-2 ring-sidebar",
+                  WAITING_DOT_CLASS_NAME[dot],
+                )}
+              />
+            </span>
+          ))}
+      </span>
+      {hiddenCount > 0 ? (
+        <span className="text-xs text-muted-foreground">+{hiddenCount}</span>
+      ) : null}
+    </span>
+  );
+}
+
+function WorkspaceRadioLabel({
+  option,
+  waiting,
+}: {
+  option: WorkspaceOption;
+  waiting: WaitingDotKind | undefined;
+}) {
   return (
     <span className="flex min-w-0 items-center justify-between gap-2">
       <span className="flex min-w-0 items-center gap-2">
-        {option.workspaceId === null ? null : (
-          <WorkspaceColorDot workspaceId={option.workspaceId} />
-        )}
+        <WorkspaceIcon option={option} />
         <span className="min-w-0 truncate">{option.label}</span>
       </span>
-      <MenuRadioItemIndicator />
+      <span className="flex shrink-0 items-center gap-2">
+        {waiting ? <WaitingDot dot={waiting} /> : null}
+        <MenuRadioItemIndicator />
+      </span>
     </span>
   );
 }
@@ -84,6 +154,8 @@ export function WorkspaceSwitcher() {
   const [activeBackendId, setActiveBackendId] = useActiveWorkspaceBackendId();
   const selectWorkspace = useSelectWorkspace();
   const workspaces = useWorkspacesStore((store) => store.workspaces);
+  const options = useWorkspaceOptions();
+  const waitingWorkspaces = resolveWaitingWorkspaces(useWaitingScope());
   const [createOpen, setCreateOpen] = useState(false);
   const activeWorkspaceId = activeBackendId?.startsWith(WORKSPACE_BACKEND_ID_PREFIX)
     ? activeBackendId.slice(WORKSPACE_BACKEND_ID_PREFIX.length)
@@ -102,21 +174,24 @@ export function WorkspaceSwitcher() {
 
   if (bridge === undefined) return null;
 
-  const options = workspaceOptions(workspaces);
   const activeOption = options.find((option) => option.backendId === activeBackendId) ?? options[0];
+  const waitingElsewhere = rankWaitingWorkspaces(options, waitingWorkspaces);
 
   return (
     <>
+      <WorkspaceShortcuts />
       <Menu>
         <MenuTrigger
           render={<SidebarMenuButton aria-label="Switch workspace" className="mb-0.5" />}
         >
-          {activeOption?.workspaceId ? (
-            <WorkspaceColorDot workspaceId={activeOption.workspaceId} />
-          ) : (
-            <BoxesIcon className="size-4 shrink-0 text-(--sidebar-icon-color)" />
-          )}
+          <WorkspaceIcon
+            option={activeOption ?? { icon: null, workspaceId: null }}
+            fallback={<BoxesIcon className="size-4 shrink-0 text-(--sidebar-icon-color)" />}
+          />
           <span className="min-w-0 flex-1 truncate">{activeOption?.label}</span>
+          {waitingElsewhere.length > 0 ? (
+            <WaitingWorkspaceStack waiting={waitingElsewhere} />
+          ) : null}
           <ChevronsUpDownIcon className="size-3.5 shrink-0 text-(--sidebar-icon-color)" />
         </MenuTrigger>
         <MenuPopup align="start" className="w-(--anchor-width)">
@@ -132,7 +207,12 @@ export function WorkspaceSwitcher() {
                 key={option.backendId ?? ALL_WORKSPACES_VALUE}
                 value={option.backendId ?? ALL_WORKSPACES_VALUE}
               >
-                <WorkspaceRadioLabel option={option} />
+                <WorkspaceRadioLabel
+                  option={option}
+                  waiting={
+                    option.backendId === null ? undefined : waitingWorkspaces.get(option.backendId)
+                  }
+                />
               </MenuRadioItem>
             ))}
           </MenuRadioGroup>

@@ -1,18 +1,48 @@
-import { type DesktopWorkspace, type DesktopWorkspaceTool } from "@t3tools/contracts";
-import { PlusIcon, Trash2Icon } from "lucide-react";
-import { useRef, useState } from "react";
+import {
+  type DesktopWorkspace,
+  type DesktopWorkspaceTool,
+  type EnvironmentId,
+  type ProjectIconOverride,
+} from "@t3tools/contracts";
+import { BoxesIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { lazy, Suspense, useRef, useState } from "react";
 
+import { updateClientSettings, useClientSettingsHydrated } from "../../hooks/useSettings";
 import { readLocalApi } from "../../localApi";
-import { useActiveWorkspaceBackendId, workspaceBackendId } from "../../workspaces/activeWorkspace";
+import { useEnvironments } from "../../state/environments";
+import {
+  ALL_WORKSPACES_LABEL,
+  DEFAULT_WORKSPACE_LABEL,
+  isRemoteEnvironment,
+  resolveAllWorkspacesLabel,
+  resolveDefaultWorkspaceLabel,
+  useActiveWorkspaceBackendId,
+  useBuiltInWorkspaces,
+  useDefaultWorkspaceLabel,
+  useEnvironmentWorkspaces,
+  useWorkspaceOptions,
+  workspaceBackendId,
+} from "../../workspaces/activeWorkspace";
 import { NewWorkspaceDialog } from "../../workspaces/NewWorkspaceDialog";
 import { formatWorkspaceEnv, parseWorkspaceEnv } from "../../workspaces/workspaceEnv";
+import { WorkspaceIcon } from "../../workspaces/WorkspaceIcon";
 import { useWorkspacesStore } from "../../workspaces/workspacesStore";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
 import { toastManager } from "../ui/toast";
 import { SettingsPageContainer, SettingsRow, SettingsSection } from "./settingsLayout";
+import { WorkspaceOrderSection } from "./WorkspaceOrderSection";
+
+const ProjectIconPickerDialog = lazy(() =>
+  import("./ProjectIconPickerDialog").then((module) => ({
+    default: module.ProjectIconPickerDialog,
+  })),
+);
+
+const ALL_WORKSPACES_VALUE = "all";
 
 const SEPARATE_TOOLS: ReadonlyArray<{
   readonly tool: DesktopWorkspaceTool;
@@ -35,8 +65,95 @@ const SEPARATE_TOOLS: ReadonlyArray<{
   },
 ];
 
+function BuiltInNameRow({
+  title,
+  builtInName,
+  value,
+  onChange,
+}: {
+  title: string;
+  builtInName: string;
+  value: string;
+  onChange: (name: string) => void;
+}) {
+  return (
+    <SettingsRow
+      title={title}
+      description="Shown in the sidebar workspace switcher. Leave empty to use the built-in name."
+      control={
+        <Input
+          key={value}
+          size="sm"
+          className="w-full sm:w-64"
+          aria-label={title}
+          placeholder={builtInName}
+          defaultValue={value}
+          onBlur={(event) => {
+            const next = event.currentTarget.value.trim();
+            if (next !== value) onChange(next);
+          }}
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+            if (event.key === "Enter") event.currentTarget.blur();
+          }}
+        />
+      }
+    />
+  );
+}
+
+function WorkspaceIconRow({
+  title,
+  name,
+  icon,
+  workspaceId,
+  onChange,
+}: {
+  title: string;
+  name: string;
+  icon: ProjectIconOverride | null;
+  workspaceId: string | null;
+  onChange: (icon: ProjectIconOverride | null) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  return (
+    <>
+      <SettingsRow
+        title={title}
+        description="Shown in the sidebar workspace switcher."
+        control={
+          <div className="flex items-center gap-2">
+            {icon === null ? null : (
+              <Button size="sm" variant="ghost" onClick={() => onChange(null)}>
+                Remove
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
+              <WorkspaceIcon option={{ icon, workspaceId }} fallback={<BoxesIcon />} />
+              Choose icon
+            </Button>
+          </div>
+        }
+      />
+      {pickerOpen ? (
+        <Suspense fallback={null}>
+          <ProjectIconPickerDialog
+            current={icon}
+            projectName={name}
+            title="Choose workspace icon"
+            open
+            onOpenChange={setPickerOpen}
+            onSelect={onChange}
+          />
+        </Suspense>
+      ) : null}
+    </>
+  );
+}
+
 function WorkspaceSettingsSection({ workspace }: { workspace: DesktopWorkspace }) {
   const setWorkspaces = useWorkspacesStore((store) => store.setWorkspaces);
+  const defaultLabel = useDefaultWorkspaceLabel();
   const [activeBackendId, setActiveBackendId] = useActiveWorkspaceBackendId();
   const nameEditedRef = useRef(false);
   const envText = formatWorkspaceEnv(workspace.env);
@@ -132,13 +249,20 @@ function WorkspaceSettingsSection({ workspace }: { workspace: DesktopWorkspace }
           />
         }
       />
+      <WorkspaceIconRow
+        title="Icon"
+        name={workspace.name}
+        icon={workspace.icon}
+        workspaceId={workspace.id}
+        onChange={(icon) => void update({ icon }, "Failed to update icon")}
+      />
       {SEPARATE_TOOLS.map((entry) => (
         <SettingsRow
           key={entry.tool}
           title={`Separate ${entry.label}`}
           description={
             <>
-              Off uses Default's login and config. On gives this workspace its own: run{" "}
+              Off uses {defaultLabel}'s login and config. On gives this workspace its own: run{" "}
               <code>{entry.signInCommand}</code> in a terminal here to sign in.
             </>
           }
@@ -181,8 +305,75 @@ function WorkspaceSettingsSection({ workspace }: { workspace: DesktopWorkspace }
   );
 }
 
+function RemoteEnvironmentsSection() {
+  const { environments } = useEnvironments();
+  const options = useWorkspaceOptions();
+  const assignments = useEnvironmentWorkspaces();
+  const settingsHydrated = useClientSettingsHydrated();
+  const remoteEnvironments = environments.filter(isRemoteEnvironment);
+  if (remoteEnvironments.length === 0) return null;
+
+  const assign = (environmentId: EnvironmentId, value: string) => {
+    const others = Object.fromEntries(
+      Object.entries(assignments).filter(([assignedId]) => assignedId !== environmentId),
+    );
+    updateClientSettings({
+      environmentWorkspaces:
+        value === ALL_WORKSPACES_VALUE ? others : { ...others, [environmentId]: value },
+    });
+  };
+
+  return (
+    <SettingsSection id="workspace-remote-environments" title="Remote environments">
+      {remoteEnvironments.map((environment) => {
+        const value = assignments[environment.environmentId] ?? ALL_WORKSPACES_VALUE;
+        const selected = options.find(
+          (option) => (option.backendId ?? ALL_WORKSPACES_VALUE) === value,
+        );
+        return (
+          <SettingsRow
+            key={environment.environmentId}
+            title={environment.label}
+            description="Choose where its projects and threads show. Agents there use that server's own logins, not this workspace's."
+            control={
+              <Select
+                value={value}
+                onValueChange={(next) => {
+                  if (next !== null) assign(environment.environmentId, next);
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="w-full sm:w-48"
+                  aria-label={`Workspace for ${environment.label}`}
+                  disabled={!settingsHydrated}
+                >
+                  <SelectValue>{selected?.label}</SelectValue>
+                </SelectTrigger>
+                <SelectPopup align="end" alignItemWithTrigger={false}>
+                  {options.map((option) => {
+                    const optionValue = option.backendId ?? ALL_WORKSPACES_VALUE;
+                    return (
+                      <SelectItem hideIndicator key={optionValue} value={optionValue}>
+                        {option.label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectPopup>
+              </Select>
+            }
+          />
+        );
+      })}
+    </SettingsSection>
+  );
+}
+
 export function WorkspacesSettingsPanel() {
   const workspaces = useWorkspacesStore((store) => store.workspaces);
+  const builtIn = useBuiltInWorkspaces();
+  const defaultLabel = resolveDefaultWorkspaceLabel(builtIn.defaultWorkspaceName);
+  const allLabel = resolveAllWorkspacesLabel(builtIn.allWorkspacesName);
   const [, setActiveBackendId] = useActiveWorkspaceBackendId();
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -199,10 +390,38 @@ export function WorkspacesSettingsPanel() {
         }
       >
         <SettingsRow
-          title="Inherited from Default"
-          description="Workspaces keep their own threads and projects. Logins, tools and MCP servers come from Default unless you separate them below."
+          title={`Inherited from ${defaultLabel}`}
+          description={`Workspaces keep their own threads and projects. Logins, tools and MCP servers come from ${defaultLabel} unless you separate them below.`}
+        />
+        <BuiltInNameRow
+          title="Default name"
+          builtInName={DEFAULT_WORKSPACE_LABEL}
+          value={builtIn.defaultWorkspaceName}
+          onChange={(defaultWorkspaceName) => void updateClientSettings({ defaultWorkspaceName })}
+        />
+        <WorkspaceIconRow
+          title="Default icon"
+          name={defaultLabel}
+          icon={builtIn.defaultWorkspaceIcon}
+          workspaceId={null}
+          onChange={(defaultWorkspaceIcon) => void updateClientSettings({ defaultWorkspaceIcon })}
+        />
+        <BuiltInNameRow
+          title="All workspaces name"
+          builtInName={ALL_WORKSPACES_LABEL}
+          value={builtIn.allWorkspacesName}
+          onChange={(allWorkspacesName) => void updateClientSettings({ allWorkspacesName })}
+        />
+        <WorkspaceIconRow
+          title="All workspaces icon"
+          name={allLabel}
+          icon={builtIn.allWorkspacesIcon}
+          workspaceId={null}
+          onChange={(allWorkspacesIcon) => void updateClientSettings({ allWorkspacesIcon })}
         />
       </SettingsSection>
+      <WorkspaceOrderSection />
+      <RemoteEnvironmentsSection />
       {workspaces.map((workspace) => (
         <WorkspaceSettingsSection key={workspace.id} workspace={workspace} />
       ))}

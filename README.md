@@ -20,8 +20,9 @@ If you work across several clients or companies, their threads should not share 
 - **Inherits by default.** Each workspace runs its own T3 Code server with its own projects and threads. It uses your existing logins, tools and MCP servers, and starts with a copy of your T3 Code settings, so it works straight away.
 - **Separate what you need.** Turn on separate Claude, Codex or GitHub CLI config under **Settings → Workspaces**, then sign in with that tool's own login command in a terminal in the workspace, such as `claude auth login`. Existing threads for that tool can't continue after you change this.
 - **Override anything else.** Add environment variables per workspace, such as `AWS_PROFILE` or `GIT_CONFIG_GLOBAL`.
-- **One click to switch.** Pick a workspace from the sidebar or the command palette, or press `mod+alt+w`. **All workspaces** shows everything at once. Every workspace starts with the app, so scheduled tasks keep running.
+- **One click to switch.** Pick a workspace from the sidebar or the command palette, or press `mod+alt+w`. **All workspaces** shows everything at once. Every workspace starts with the app, so scheduled tasks keep running. When another workspace is waiting on you, its icon appears on the switcher, and and `mod+alt+j` opens whatever has been waiting longest. `mod+alt+1` to `9` jump straight to a workspace. Set icons, rename Default and All workspaces and drag to reorder under **Settings → Workspaces**.
 - **No crossed wires.** New threads stay in the workspace you are in, and load balancing and PR routing leave workspaces out.
+- **Remote environments.** An SSH or paired server shows in every workspace by default. To keep it in one workspace, pick that workspace under **Settings → Workspaces**. Agents there use that server's logins, so a workspace's separate logins and environment variables don't apply.
 
 To keep client MCP servers apart without a separate login, skip global servers and define them per project: `claude mcp add --scope local`, or a `.mcp.json` in the repo. A `.mcp.json` in a parent folder also works, but not in worktrees outside that folder.
 

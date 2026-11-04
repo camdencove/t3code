@@ -25,6 +25,7 @@ import { SecretProviderId, SecretProviderSlug } from "./secretReference.ts";
 import { SettingsSecretValue } from "./settingsSecretValue.ts";
 import { EnvironmentMachineKind, ThreadEnvMode, WorktreeSubmodules } from "./environment.ts";
 import { KeybindingShortcut } from "./keybindings.ts";
+import { ReceivedProjectIcon } from "./project.ts";
 import {
   CustomModelSetting,
   DEFAULT_TEXT_GENERATION_MODEL,
@@ -324,6 +325,8 @@ export const LoadBalancingWeights = Schema.Record(
   Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 100 })),
 );
 
+export const EnvironmentWorkspaces = Schema.Record(TrimmedNonEmptyString, TrimmedNonEmptyString);
+
 export const DiffColorScheme = Schema.Literals(["red-green", "blue-orange"]);
 
 export const ChatWidth = Schema.Literals(["comfortable", "wide", "full"]);
@@ -362,6 +365,18 @@ export const ClientSettingsSchema = Schema.Struct({
   effortDisplay: EffortDisplay.pipe(Schema.withDecodingDefault(Effect.succeed("label" as const))),
   loadBalancingEnabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
   loadBalancingWeights: LoadBalancingWeights.pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  environmentWorkspaces: EnvironmentWorkspaces.pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  defaultWorkspaceIcon: Schema.NullOr(ReceivedProjectIcon).pipe(
+    Schema.withDecodingDefault(Effect.succeed(null)),
+  ),
+  defaultWorkspaceName: Schema.String.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
+  allWorkspacesIcon: Schema.NullOr(ReceivedProjectIcon).pipe(
+    Schema.withDecodingDefault(Effect.succeed(null)),
+  ),
+  allWorkspacesName: Schema.String.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
+  workspaceOrder: Schema.Array(TrimmedNonEmptyString).pipe(
+    Schema.withDecodingDefault(Effect.succeed([])),
+  ),
   appearanceContrast: AppearanceContrast.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_APPEARANCE_CONTRAST)),
   ),
@@ -1768,6 +1783,12 @@ export const ClientSettingsPatch = Schema.Struct({
   effortDisplay: Schema.optionalKey(EffortDisplay),
   loadBalancingEnabled: Schema.optionalKey(Schema.Boolean),
   loadBalancingWeights: Schema.optionalKey(LoadBalancingWeights),
+  environmentWorkspaces: Schema.optionalKey(EnvironmentWorkspaces),
+  defaultWorkspaceIcon: Schema.optionalKey(Schema.NullOr(ReceivedProjectIcon)),
+  defaultWorkspaceName: Schema.optionalKey(Schema.String),
+  allWorkspacesIcon: Schema.optionalKey(Schema.NullOr(ReceivedProjectIcon)),
+  allWorkspacesName: Schema.optionalKey(Schema.String),
+  workspaceOrder: Schema.optionalKey(Schema.Array(TrimmedNonEmptyString)),
   appearanceContrast: Schema.optionalKey(AppearanceContrast),
   panelAnimationDurationMs: Schema.optionalKey(PanelAnimationDurationMs),
   browserDefaultViewport: Schema.optionalKey(PreviewViewportSetting),

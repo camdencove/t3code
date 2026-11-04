@@ -218,6 +218,7 @@ const KEYBINDING_GROUPS = [
   { id: "terminal", title: "Terminal", prefixes: ["terminal"] },
   { id: "preview", title: "Preview & diff", prefixes: ["preview", "diff"] },
   { id: "appearance", title: "Appearance", prefixes: ["theme", "appearance", "themeEditor"] },
+  { id: "workspaces", title: "Workspaces", prefixes: ["workspaces"] },
   { id: "scripts", title: "Project scripts", prefixes: ["script"] },
 ] as const;
 const OTHER_KEYBINDING_GROUP = { id: "other", title: "Other" } as const;
@@ -381,8 +382,12 @@ export function commandLabel(command: KeybindingCommand): string {
   const usagePeriod = WINDOW_OPTIONS.find((option) => option.command === command);
   if (usagePeriod) return `Usage: Period: ${usagePeriod.label}`;
   if (command === "view.reopenClosed") return "Reopen Closed Tab";
+  if (command === "workspaces.nextWaiting") return "Workspaces: Go to Next Waiting";
   if (command === "preview.focusUrl") return "Preview: Focus URL";
   const raw = String(command);
+  if (raw.startsWith("workspaces.jump.")) {
+    return `Workspaces: Go to Workspace ${raw.slice("workspaces.jump.".length)}`;
+  }
   if (raw.startsWith("script.") && raw.endsWith(".run")) {
     return `Run Script: ${titleCaseCommandSegment(raw.slice("script.".length, -".run".length))}`;
   }

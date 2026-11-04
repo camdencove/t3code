@@ -241,7 +241,7 @@ export const layer = Layer.effect(
             if (!isWorkspaceNameAvailable(current, name, null)) {
               return yield* new DesktopWorkspaceNameError({ name });
             }
-            const next = [...current, { id, name: name.trim(), separate: [], env: {} }];
+            const next = [...current, { id, name: name.trim(), separate: [], env: {}, icon: null }];
             yield* persist(next);
             yield* seedWorkspaceState({
               parentStateDir: environment.stateDir,

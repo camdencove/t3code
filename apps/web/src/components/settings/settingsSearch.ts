@@ -768,7 +768,9 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: "workspaces",
     title: "Workspaces",
     to: "/settings/workspaces",
-    searchTerms: ["shared logins claude token github gh mcp rename delete"],
+    searchTerms: [
+      "shared logins claude token github gh mcp rename delete remote ssh environment icon",
+    ],
     desktopOnly: true,
   },
   {

@@ -8,6 +8,7 @@ import {
   type ResolvedKeybindingRule,
   type ResolvedKeybindingsConfig,
   THREAD_JUMP_KEYBINDING_COMMANDS,
+  WORKSPACE_JUMP_KEYBINDING_COMMANDS,
 } from "@t3tools/contracts";
 
 export interface ShortcutEventLike {
@@ -177,6 +178,12 @@ export const DEFAULT_KEYBINDINGS: ReadonlyArray<KeybindingRule> = [
   { key: "mod+u", command: "usage.open", when: "!terminalFocus" },
   { key: "mod+alt+a", command: "theme.select", when: "!terminalFocus" },
   { key: "mod+alt+w", command: "workspaces.switch", when: "!terminalFocus" },
+  { key: "mod+alt+j", command: "workspaces.nextWaiting", when: "isDesktop" },
+  ...WORKSPACE_JUMP_KEYBINDING_COMMANDS.map((command, index) => ({
+    key: `mod+alt+${index + 1}`,
+    command,
+    when: "isDesktop",
+  })),
   { key: "mod+alt+shift+a", command: "appearance.cycle", when: "!terminalFocus" },
   { key: "mod+alt+shift+t", command: "themeEditor.toggle" },
   { key: "mod+s", command: "composer.stash", when: "!terminalFocus" },
