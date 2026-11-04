@@ -132,7 +132,7 @@ async function startupCleanupPattern(desktopDir) {
         },
         spawn: () => new NodeEvents.EventEmitter(),
       },
-      NodeFS: { watch: () => ({ close: () => undefined }) },
+      NodeFS: { statSync: () => undefined, watch: () => ({ close: () => undefined }) },
       NodeOS: { platform: () => "linux" },
       NodePath,
       desktopDir,

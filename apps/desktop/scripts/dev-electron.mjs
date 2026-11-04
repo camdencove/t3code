@@ -80,6 +80,7 @@ let currentApp = null;
 let restartQueue = Promise.resolve();
 const expectedExits = new WeakSet();
 const watchers = [];
+const lastModifiedTimes = new Map();
 
 function killChildTreeByPid(pid, signal) {
   if (hostPlatform === "win32" || typeof pid !== "number") {
@@ -207,19 +208,37 @@ function scheduleRestart() {
   }, restartDebounceMs);
 }
 
+function readModifiedTime(filePath) {
+  return NodeFS.statSync(filePath, { throwIfNoEntry: false })?.mtimeMs;
+}
+
+function hasBeenRewritten(filePath) {
+  const modifiedTime = readModifiedTime(filePath);
+  const rewritten = modifiedTime !== lastModifiedTimes.get(filePath);
+  lastModifiedTimes.set(filePath, modifiedTime);
+  return rewritten;
+}
+
 function startWatchers() {
   for (const { directory, files } of watchedDirectories) {
-    const watcher = NodeFS.watch(
-      NodePath.join(desktopDir, directory),
-      { persistent: true },
-      (_eventType, filename) => {
-        if (typeof filename !== "string" || !files.has(filename)) {
-          return;
-        }
+    const watchedDirectory = NodePath.join(desktopDir, directory);
+    for (const file of files) {
+      const filePath = NodePath.join(watchedDirectory, file);
+      lastModifiedTimes.set(filePath, readModifiedTime(filePath));
+    }
 
-        scheduleRestart();
-      },
-    );
+    const watcher = NodeFS.watch(watchedDirectory, { persistent: true }, (_eventType, filename) => {
+      if (typeof filename !== "string" || !files.has(filename)) {
+        return;
+      }
+
+      // On Windows fs.watch also fires when a read moves a file's access time.
+      if (!hasBeenRewritten(NodePath.join(watchedDirectory, filename))) {
+        return;
+      }
+
+      scheduleRestart();
+    });
 
     watchers.push(watcher);
   }
