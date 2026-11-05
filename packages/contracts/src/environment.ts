@@ -8,6 +8,7 @@ import {
   ThreadId,
   TrimmedNonEmptyString,
 } from "./baseSchemas.ts";
+import { ReceivedProjectIcon } from "./projectIcon.ts";
 import { SourceControlProviderKind } from "./sourceControl.ts";
 
 export const ORCHESTRATION_PROTOCOL_VERSION = 2;
@@ -174,6 +175,7 @@ export type ExecutionEnvironmentCapabilities = typeof ExecutionEnvironmentCapabi
 export const ExecutionEnvironmentDescriptor = Schema.Struct({
   environmentId: EnvironmentId,
   label: TrimmedNonEmptyString,
+  icon: Schema.optionalKey(Schema.NullOr(ReceivedProjectIcon)),
   platform: ExecutionEnvironmentPlatform,
   serverVersion: TrimmedNonEmptyString,
   orchestrationProtocolVersion: Schema.optionalKey(Schema.Int),

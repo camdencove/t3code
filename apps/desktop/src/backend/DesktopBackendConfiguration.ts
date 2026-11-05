@@ -1,6 +1,6 @@
 import * as NodeOS from "node:os";
 
-import type { DesktopWorkspace } from "@t3tools/contracts";
+import { type DesktopWorkspace, ReceivedProjectIcon } from "@t3tools/contracts";
 import { parsePersistedServerObservabilitySettings } from "@t3tools/shared/serverSettings";
 import { currentDesktopBootstrapToken } from "@t3tools/shared/desktopBootstrapToken";
 import * as Clock from "effect/Clock";
@@ -77,6 +77,8 @@ const emptyBackendObservabilitySettings: BackendObservabilitySettings = {
   otlpMetricsUrl: Option.none(),
   otlpLogsUrl: Option.none(),
 };
+
+const encodeEnvironmentIcon = Schema.encodeSync(Schema.fromJsonString(ReceivedProjectIcon));
 
 const DESKTOP_BACKEND_ENV_NAMES = [
   "T3CODE_PORT",
@@ -859,6 +861,9 @@ export const make = Effect.gen(function* () {
             workspace: input.workspace,
           }),
           T3CODE_ENVIRONMENT_LABEL: input.workspace.name,
+          ...(input.workspace.icon === null
+            ? {}
+            : { T3CODE_ENVIRONMENT_ICON: encodeEnvironmentIcon(input.workspace.icon) }),
         },
         bootstrap: {
           ...bootstrap,

@@ -1,3 +1,4 @@
+import { type ProjectIconOverride, ReceivedProjectIcon } from "@t3tools/contracts";
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
@@ -178,6 +179,17 @@ const resolveFriendlyHostLabel = Effect.fn("resolveFriendlyHostLabel")(function*
 
   return null;
 });
+
+const decodeEnvironmentIcon = Schema.decodeUnknownOption(
+  Schema.fromJsonString(ReceivedProjectIcon),
+);
+
+export const parseEnvironmentIcon = (raw: string | undefined): ProjectIconOverride | null =>
+  raw === undefined ? null : Option.getOrNull(decodeEnvironmentIcon(raw));
+
+export const resolveServerEnvironmentIcon = Effect.map(HostProcess.Environment, (environment) =>
+  parseEnvironmentIcon(environment.T3CODE_ENVIRONMENT_ICON),
+);
 
 export const resolveServerEnvironmentLabel = Effect.fn("resolveServerEnvironmentLabel")(function* (
   input: ResolveServerEnvironmentLabelInput,

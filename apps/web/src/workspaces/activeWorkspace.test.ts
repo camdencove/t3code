@@ -237,6 +237,20 @@ describe("workspaceOptions", () => {
     });
   });
 
+  it.each([
+    { name: "the exported icon", saved: {}, expected: defaultIcon },
+    {
+      name: "this device's icon over the exported one",
+      saved: { [remoteId]: allIcon },
+      expected: allIcon,
+    },
+  ])("uses $name", ({ saved, expected }) => {
+    const options = workspaceOptions(workspaces, { environmentIcons: saved }, [
+      { environmentId: remoteId, label: "Box", icon: defaultIcon },
+    ]);
+    expect(options.at(-1)?.icon).toEqual(expected);
+  });
+
   it("sorts remote environments with the saved order", () => {
     const options = workspaceOptions(workspaces, { workspaceOrder: [`remote:${remoteId}`] }, [
       { environmentId: remoteId, label: "Box" },

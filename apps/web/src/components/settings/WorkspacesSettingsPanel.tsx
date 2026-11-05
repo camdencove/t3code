@@ -112,12 +112,14 @@ function WorkspaceIconRow({
   title,
   name,
   icon,
+  exportedIcon = null,
   colorKey,
   onChange,
 }: {
   title: string;
   name: string;
   icon: ProjectIconOverride | null;
+  exportedIcon?: ProjectIconOverride | null;
   colorKey: string | null;
   onChange: (icon: ProjectIconOverride | null) => void;
 }) {
@@ -135,7 +137,10 @@ function WorkspaceIconRow({
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
-              <WorkspaceIcon option={{ icon, colorKey }} fallback={<BoxesIcon />} />
+              <WorkspaceIcon
+                option={{ icon: icon ?? exportedIcon, colorKey }}
+                fallback={<BoxesIcon />}
+              />
               Choose icon
             </Button>
           </div>
@@ -144,7 +149,7 @@ function WorkspaceIconRow({
       {pickerOpen ? (
         <Suspense fallback={null}>
           <ProjectIconPickerDialog
-            current={icon}
+            current={icon ?? exportedIcon}
             projectName={name}
             title="Choose workspace icon"
             open
@@ -183,23 +188,24 @@ function WorkspacePairingRow({ workspace }: { workspace: DesktopWorkspace }) {
         : null;
     setIsCopying(false);
     if (url === null) {
-      toastManager.add({ type: "error", title: "Could not create a pairing link" });
+      toastManager.add({ type: "error", title: "Could not create an export link" });
       return;
     }
     await navigator.clipboard.writeText(url);
     toastManager.add({
       type: "success",
-      title: "Pairing link copied",
-      description: "Paste it under Settings → Environments → Add environment on the other device.",
+      title: "Export link copied",
+      description:
+        "Paste it under Settings → Environments → Add environment on the other device. Its name and icon come with it.",
     });
   };
 
   return (
     <SettingsRow
-      title="Use from another device"
+      title="Export to another device"
       description={
         isNetworkAccessible
-          ? "Copies a one-time link for this workspace. Each workspace on a device needs its own link."
+          ? "Copies a one-time link that brings this workspace's name and icon with it. Each workspace needs its own link."
           : "Turn on Network access under Sharing & access first."
       }
       control={
@@ -209,7 +215,7 @@ function WorkspacePairingRow({ workspace }: { workspace: DesktopWorkspace }) {
           disabled={!isNetworkAccessible || environment === undefined || isCopying}
           onClick={() => void copyPairingLink()}
         >
-          Copy pairing link
+          Copy export link
         </Button>
       }
     />
@@ -445,6 +451,7 @@ function RemoteEnvironmentsSection() {
               title={`${environment.label} icon`}
               name={environment.label}
               icon={environmentIcons[environment.environmentId] ?? null}
+              exportedIcon={environment.serverConfig?.environment.icon ?? null}
               colorKey={environment.environmentId}
               onChange={(icon) => setIcon(environment.environmentId, icon)}
             />

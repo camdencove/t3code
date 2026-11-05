@@ -89,6 +89,7 @@ export function workspaceOptions(
   remoteEnvironments: ReadonlyArray<{
     readonly environmentId: EnvironmentId;
     readonly label: string;
+    readonly icon?: ProjectIconOverride | null;
   }> = [],
 ): ReadonlyArray<WorkspaceOption> {
   const options = [
@@ -110,9 +111,9 @@ export function workspaceOptions(
       label: workspace.name,
       colorKey: workspace.id,
     })),
-    ...remoteEnvironments.map(({ environmentId, label }) => ({
+    ...remoteEnvironments.map(({ environmentId, label, icon }) => ({
       backendId: remoteEnvironmentBackendId(environmentId),
-      icon: builtIn.environmentIcons?.[environmentId] ?? null,
+      icon: builtIn.environmentIcons?.[environmentId] ?? icon ?? null,
       label,
       colorKey: environmentId,
     })),
@@ -220,7 +221,15 @@ export function useWorkspaceOptions(): ReadonlyArray<WorkspaceOption> {
   const workspaces = useWorkspacesStore((store) => store.workspaces);
   const builtIn = useBuiltInWorkspaces();
   const { environments } = useEnvironments();
-  return workspaceOptions(workspaces, builtIn, environments.filter(isRemoteEnvironment));
+  return workspaceOptions(
+    workspaces,
+    builtIn,
+    environments.filter(isRemoteEnvironment).map((environment) => ({
+      environmentId: environment.environmentId,
+      label: environment.label,
+      icon: environment.serverConfig?.environment.icon ?? null,
+    })),
+  );
 }
 
 export function useEnvironmentWorkspaces(): Readonly<Record<string, string>> {
