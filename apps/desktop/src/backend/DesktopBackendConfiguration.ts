@@ -858,11 +858,11 @@ export const make = Effect.gen(function* () {
             workspacePath,
             workspace: input.workspace,
           }),
+          T3CODE_ENVIRONMENT_LABEL: input.workspace.name,
         },
         bootstrap: {
           ...bootstrap,
           port: input.port,
-          host: "127.0.0.1",
           t3Home: workspacePath("t3"),
           tailscaleServeEnabled: false,
         },

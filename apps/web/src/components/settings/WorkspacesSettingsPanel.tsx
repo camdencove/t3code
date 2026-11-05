@@ -8,8 +8,12 @@ import { BoxesIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { lazy, Suspense, useRef, useState } from "react";
 
 import { updateClientSettings, useClientSettingsHydrated } from "../../hooks/useSettings";
+import { desktopLocalBackendId } from "../../connection/desktopLocal";
 import { readLocalApi } from "../../localApi";
+import { desktopNetworkAccessStateAtom } from "../../state/desktopNetworkAccess";
 import { useEnvironments } from "../../state/environments";
+import { mintDevicePairingCodeOn } from "../../state/peerPairingCode";
+import { useEnvironmentQuery } from "../../state/query";
 import {
   ALL_WORKSPACES_LABEL,
   DEFAULT_WORKSPACE_LABEL,
@@ -26,6 +30,7 @@ import {
 import { NewWorkspaceDialog } from "../../workspaces/NewWorkspaceDialog";
 import { formatWorkspaceEnv, parseWorkspaceEnv } from "../../workspaces/workspaceEnv";
 import { WorkspaceIcon } from "../../workspaces/WorkspaceIcon";
+import { resolveWorkspacePairingUrl } from "../../workspaces/workspacePairing";
 import { useWorkspacesStore } from "../../workspaces/workspacesStore";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -148,6 +153,65 @@ function WorkspaceIconRow({
         </Suspense>
       ) : null}
     </>
+  );
+}
+
+function WorkspacePairingRow({ workspace }: { workspace: DesktopWorkspace }) {
+  const { environments } = useEnvironments();
+  const networkAccess = useEnvironmentQuery(desktopNetworkAccessStateAtom);
+  const [isCopying, setIsCopying] = useState(false);
+  const isNetworkAccessible = networkAccess.data?.serverExposureState.mode === "network-accessible";
+  const environment = environments.find(
+    (candidate) => desktopLocalBackendId(candidate.entry.target) === workspaceBackendId(workspace),
+  );
+
+  const copyPairingLink = async () => {
+    const workspaceHttpBaseUrl = window.desktopBridge
+      ?.getLocalEnvironmentBootstraps()
+      .find((bootstrap) => bootstrap.id === workspaceBackendId(workspace))?.httpBaseUrl;
+    if (environment === undefined || !workspaceHttpBaseUrl) return;
+    setIsCopying(true);
+    const minted = await mintDevicePairingCodeOn(environment.environmentId);
+    const url =
+      minted._tag === "Success"
+        ? resolveWorkspacePairingUrl({
+            advertisedEndpoints: networkAccess.data?.advertisedEndpoints ?? [],
+            workspaceHttpBaseUrl,
+            credential: minted.success,
+          })
+        : null;
+    setIsCopying(false);
+    if (url === null) {
+      toastManager.add({ type: "error", title: "Could not create a pairing link" });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toastManager.add({
+      type: "success",
+      title: "Pairing link copied",
+      description: "Paste it under Settings → Environments → Add environment on the other device.",
+    });
+  };
+
+  return (
+    <SettingsRow
+      title="Use from another device"
+      description={
+        isNetworkAccessible
+          ? "Copies a one-time link for this workspace. Each workspace on a device needs its own link."
+          : "Turn on Network access under Sharing & access first."
+      }
+      control={
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!isNetworkAccessible || environment === undefined || isCopying}
+          onClick={() => void copyPairingLink()}
+        >
+          Copy pairing link
+        </Button>
+      }
+    />
   );
 }
 
@@ -291,6 +355,7 @@ function WorkspaceSettingsSection({ workspace }: { workspace: DesktopWorkspace }
           />
         }
       />
+      <WorkspacePairingRow workspace={workspace} />
       <SettingsRow
         title="Delete workspace"
         description="Deletes its threads, settings and separate logins. Project files and worktrees stay on disk."

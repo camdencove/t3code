@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   hasSameBackendEnv,
+  workspacePortCandidates,
   isWorkspaceNameAvailable,
   workspaceIdFromName,
 } from "./DesktopWorkspaces.ts";
@@ -23,6 +24,30 @@ describe("isWorkspaceNameAvailable", () => {
     { name: "a rename to nothing", input: "---", ownId: "alpha", expected: false },
   ])("handles $name", ({ input, ownId, expected }) => {
     expect(isWorkspaceNameAvailable(workspaces, input, ownId)).toBe(expected);
+  });
+});
+
+describe("workspacePortCandidates", () => {
+  it("keeps a workspace on the same first port across starts", () => {
+    expect(workspacePortCandidates("alpha", 3773)[0]).toBe(
+      workspacePortCandidates("alpha", 3773)[0],
+    );
+  });
+
+  it("gives workspaces their own first port regardless of start order", () => {
+    expect(workspacePortCandidates("alpha", 3773)[0]).not.toBe(
+      workspacePortCandidates("beta", 3773)[0],
+    );
+  });
+
+  it.each([
+    { name: "a default primary port", primaryPort: 3773 },
+    { name: "the highest usable primary port", primaryPort: 65_000 },
+  ])("stays above the primary and in range with $name", ({ primaryPort }) => {
+    const candidates = workspacePortCandidates("alpha", primaryPort);
+    expect(new Set(candidates).size).toBe(candidates.length);
+    expect(Math.min(...candidates)).toBeGreaterThan(primaryPort);
+    expect(Math.max(...candidates)).toBeLessThanOrEqual(65_535);
   });
 });
 

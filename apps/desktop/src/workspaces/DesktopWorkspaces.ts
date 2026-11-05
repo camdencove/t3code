@@ -24,6 +24,7 @@ import { workspaceBackendEnv } from "./workspaceBackendEnv.ts";
 import { removeWorkspaceData, seedWorkspaceState } from "./workspaceState.ts";
 
 const WORKSPACE_PORT_OFFSET = 100;
+const WORKSPACE_PORT_RANGE = 1000;
 const MAX_TCP_PORT = 65_535;
 const WORKSPACE_READY_TIMEOUT = Duration.seconds(60);
 
@@ -91,6 +92,22 @@ const backendEnvKey = (workspace: Pick<DesktopWorkspace, "separate" | "env">): s
     Object.entries(workspaceBackendEnv({ workspacePath: (name) => name, workspace })).toSorted(),
   );
 
+/** Saved links on other devices name a workspace's port, so it must not depend on start order. */
+export function workspacePortCandidates(
+  workspaceId: string,
+  primaryPort: number,
+): ReadonlyArray<number> {
+  let hash = 0;
+  for (const character of workspaceId) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+  const firstPort = primaryPort + WORKSPACE_PORT_OFFSET;
+  return Array.from(
+    { length: WORKSPACE_PORT_RANGE },
+    (_, attempt) => firstPort + ((hash + attempt) % WORKSPACE_PORT_RANGE),
+  ).filter((port) => port <= MAX_TCP_PORT);
+}
+
 export const hasSameBackendEnv = (
   left: Pick<DesktopWorkspace, "separate" | "env">,
   right: Pick<DesktopWorkspace, "separate" | "env">,
@@ -157,18 +174,20 @@ export const layer = Layer.effect(
         Effect.provideService(Path.Path, environment.path),
       );
 
-    const allocatePort = Effect.gen(function* () {
+    const allocatePort = Effect.fn("desktop.workspaces.allocatePort")(function* (
+      workspaceId: string,
+    ) {
       const primaryConfig = yield* serverExposure.backendConfig;
       const allocated = yield* Ref.get(allocatedPortsRef);
-      for (let port = primaryConfig.port + WORKSPACE_PORT_OFFSET; port <= MAX_TCP_PORT; port += 1) {
+      for (const port of workspacePortCandidates(workspaceId, primaryConfig.port)) {
         if (allocated.has(port)) continue;
-        if (yield* net.canListenOnHost(port, "127.0.0.1")) {
+        if (yield* net.canListenOnHost(port, primaryConfig.bindHost)) {
           yield* Ref.set(allocatedPortsRef, new Set([...allocated, port]));
           return port;
         }
       }
       return yield* new NetService.NetError({
-        message: "No loopback port available for a workspace backend.",
+        message: "No port available for a workspace backend.",
       });
     });
 
@@ -200,7 +219,7 @@ export const layer = Layer.effect(
         yield* existing.value.start;
         return existing.value;
       }
-      const port = yield* allocatePort;
+      const port = yield* allocatePort(workspace.id);
       const instance = yield* pool.register({
         id,
         onReady: () =>

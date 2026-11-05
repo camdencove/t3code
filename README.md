@@ -28,7 +28,7 @@ To keep client MCP servers apart without a separate login, skip global servers a
 
 Only what you turn on is separate. Cursor, OpenCode, Grok, Kiro, Antigravity, your git identity and your SSH keys always come from your normal setup unless you override them with environment variables.
 
-Workspaces are a desktop app feature. They run on your machine only, so the mobile app and remote connections can't reach them.
+Workspaces are a desktop app feature. To use one from another device, turn on **Network access** under **Settings → Sharing & access**, then choose **Copy pairing link** on that workspace under **Settings → Workspaces** and paste the link into **Add environment** on the other device. Each workspace is paired on its own.
 
 ## Download
 
