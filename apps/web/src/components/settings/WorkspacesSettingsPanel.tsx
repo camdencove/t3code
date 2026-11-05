@@ -5,7 +5,7 @@ import {
   type ProjectIconOverride,
 } from "@t3tools/contracts";
 import { BoxesIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { lazy, Suspense, useRef, useState } from "react";
+import { Fragment, lazy, Suspense, useRef, useState } from "react";
 
 import { updateClientSettings, useClientSettingsHydrated } from "../../hooks/useSettings";
 import { desktopLocalBackendId } from "../../connection/desktopLocal";
@@ -18,6 +18,7 @@ import {
   ALL_WORKSPACES_LABEL,
   DEFAULT_WORKSPACE_LABEL,
   isRemoteEnvironment,
+  isRemoteEnvironmentBackendId,
   resolveAllWorkspacesLabel,
   resolveDefaultWorkspaceLabel,
   useActiveWorkspaceBackendId,
@@ -111,13 +112,13 @@ function WorkspaceIconRow({
   title,
   name,
   icon,
-  workspaceId,
+  colorKey,
   onChange,
 }: {
   title: string;
   name: string;
   icon: ProjectIconOverride | null;
-  workspaceId: string | null;
+  colorKey: string | null;
   onChange: (icon: ProjectIconOverride | null) => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -134,7 +135,7 @@ function WorkspaceIconRow({
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
-              <WorkspaceIcon option={{ icon, workspaceId }} fallback={<BoxesIcon />} />
+              <WorkspaceIcon option={{ icon, colorKey }} fallback={<BoxesIcon />} />
               Choose icon
             </Button>
           </div>
@@ -317,7 +318,7 @@ function WorkspaceSettingsSection({ workspace }: { workspace: DesktopWorkspace }
         title="Icon"
         name={workspace.name}
         icon={workspace.icon}
-        workspaceId={workspace.id}
+        colorKey={workspace.id}
         onChange={(icon) => void update({ icon }, "Failed to update icon")}
       />
       {SEPARATE_TOOLS.map((entry) => (
@@ -372,7 +373,10 @@ function WorkspaceSettingsSection({ workspace }: { workspace: DesktopWorkspace }
 
 function RemoteEnvironmentsSection() {
   const { environments } = useEnvironments();
-  const options = useWorkspaceOptions();
+  const options = useWorkspaceOptions().filter(
+    (option) => !isRemoteEnvironmentBackendId(option.backendId),
+  );
+  const { environmentIcons } = useBuiltInWorkspaces();
   const assignments = useEnvironmentWorkspaces();
   const settingsHydrated = useClientSettingsHydrated();
   const remoteEnvironments = environments.filter(isRemoteEnvironment);
@@ -388,6 +392,15 @@ function RemoteEnvironmentsSection() {
     });
   };
 
+  const setIcon = (environmentId: EnvironmentId, icon: ProjectIconOverride | null) => {
+    const others = Object.fromEntries(
+      Object.entries(environmentIcons).filter(([iconId]) => iconId !== environmentId),
+    );
+    void updateClientSettings({
+      environmentIcons: icon === null ? others : { ...others, [environmentId]: icon },
+    });
+  };
+
   return (
     <SettingsSection id="workspace-remote-environments" title="Remote environments">
       {remoteEnvironments.map((environment) => {
@@ -396,38 +409,46 @@ function RemoteEnvironmentsSection() {
           (option) => (option.backendId ?? ALL_WORKSPACES_VALUE) === value,
         );
         return (
-          <SettingsRow
-            key={environment.environmentId}
-            title={environment.label}
-            description="Choose where its projects and threads show. Agents there use that server's own logins, not this workspace's."
-            control={
-              <Select
-                value={value}
-                onValueChange={(next) => {
-                  if (next !== null) assign(environment.environmentId, next);
-                }}
-              >
-                <SelectTrigger
-                  size="sm"
-                  className="w-full sm:w-48"
-                  aria-label={`Workspace for ${environment.label}`}
-                  disabled={!settingsHydrated}
+          <Fragment key={environment.environmentId}>
+            <SettingsRow
+              title={environment.label}
+              description="It always has its own switcher entry. Choose which workspaces also show its projects and threads. Agents there use that server's own logins."
+              control={
+                <Select
+                  value={value}
+                  onValueChange={(next) => {
+                    if (next !== null) assign(environment.environmentId, next);
+                  }}
                 >
-                  <SelectValue>{selected?.label}</SelectValue>
-                </SelectTrigger>
-                <SelectPopup align="end" alignItemWithTrigger={false}>
-                  {options.map((option) => {
-                    const optionValue = option.backendId ?? ALL_WORKSPACES_VALUE;
-                    return (
-                      <SelectItem hideIndicator key={optionValue} value={optionValue}>
-                        {option.label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectPopup>
-              </Select>
-            }
-          />
+                  <SelectTrigger
+                    size="sm"
+                    className="w-full sm:w-48"
+                    aria-label={`Workspace for ${environment.label}`}
+                    disabled={!settingsHydrated}
+                  >
+                    <SelectValue>{selected?.label}</SelectValue>
+                  </SelectTrigger>
+                  <SelectPopup align="end" alignItemWithTrigger={false}>
+                    {options.map((option) => {
+                      const optionValue = option.backendId ?? ALL_WORKSPACES_VALUE;
+                      return (
+                        <SelectItem hideIndicator key={optionValue} value={optionValue}>
+                          {option.label}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectPopup>
+                </Select>
+              }
+            />
+            <WorkspaceIconRow
+              title={`${environment.label} icon`}
+              name={environment.label}
+              icon={environmentIcons[environment.environmentId] ?? null}
+              colorKey={environment.environmentId}
+              onChange={(icon) => setIcon(environment.environmentId, icon)}
+            />
+          </Fragment>
         );
       })}
     </SettingsSection>
@@ -468,7 +489,7 @@ export function WorkspacesSettingsPanel() {
           title="Default icon"
           name={defaultLabel}
           icon={builtIn.defaultWorkspaceIcon}
-          workspaceId={null}
+          colorKey={null}
           onChange={(defaultWorkspaceIcon) => void updateClientSettings({ defaultWorkspaceIcon })}
         />
         <BuiltInNameRow
@@ -481,7 +502,7 @@ export function WorkspacesSettingsPanel() {
           title="All workspaces icon"
           name={allLabel}
           icon={builtIn.allWorkspacesIcon}
-          workspaceId={null}
+          colorKey={null}
           onChange={(allWorkspacesIcon) => void updateClientSettings({ allWorkspacesIcon })}
         />
       </SettingsSection>

@@ -377,6 +377,9 @@ export const ClientSettingsSchema = Schema.Struct({
   workspaceOrder: Schema.Array(TrimmedNonEmptyString).pipe(
     Schema.withDecodingDefault(Effect.succeed([])),
   ),
+  environmentIcons: Schema.Record(TrimmedNonEmptyString, ReceivedProjectIcon).pipe(
+    Schema.withDecodingDefault(Effect.succeed({})),
+  ),
   appearanceContrast: AppearanceContrast.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_APPEARANCE_CONTRAST)),
   ),
@@ -1789,6 +1792,7 @@ export const ClientSettingsPatch = Schema.Struct({
   allWorkspacesIcon: Schema.optionalKey(Schema.NullOr(ReceivedProjectIcon)),
   allWorkspacesName: Schema.optionalKey(Schema.String),
   workspaceOrder: Schema.optionalKey(Schema.Array(TrimmedNonEmptyString)),
+  environmentIcons: Schema.optionalKey(Schema.Record(TrimmedNonEmptyString, ReceivedProjectIcon)),
   appearanceContrast: Schema.optionalKey(AppearanceContrast),
   panelAnimationDurationMs: Schema.optionalKey(PanelAnimationDurationMs),
   browserDefaultViewport: Schema.optionalKey(PreviewViewportSetting),

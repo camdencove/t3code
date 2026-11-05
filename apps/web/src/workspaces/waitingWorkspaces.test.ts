@@ -130,6 +130,22 @@ describe("resolveWaitingWorkspaces", () => {
   });
 });
 
+describe("resolveWaitingWorkspaces for remote environments", () => {
+  it("marks a remote environment's own switcher entry while another is active", () => {
+    const dots = resolveWaitingWorkspaces({
+      activeBackendId: `remote:${betaId}`,
+      backendIds: [...backendIds, `remote:${remoteId}`],
+      environments,
+      environmentWorkspaces: { [remoteId]: "workspace:beta" },
+      primaryEnvironmentId: primaryId,
+      threads: [
+        { ...idleThread, environmentId: remoteId, hasPendingApprovals: true },
+      ] as unknown as Parameters<typeof resolveWaitingWorkspaces>[0]["threads"],
+    });
+    expect(dots.get(`remote:${remoteId}`)).toBe("attention");
+  });
+});
+
 describe("resolveNextWaitingThread", () => {
   const asking = (environmentId: EnvironmentId, updatedAt: string) => ({
     ...idleThread,

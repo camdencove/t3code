@@ -20,7 +20,9 @@ import {
 import { SidebarMenuButton } from "../components/ui/sidebar";
 import { toastManager } from "../components/ui/toast";
 import { cn } from "../lib/utils";
+import { useEnvironments } from "../state/environments";
 import {
+  isRemoteEnvironmentBackendId,
   useActiveWorkspaceBackendId,
   useSelectWorkspace,
   useWorkspaceOptions,
@@ -161,6 +163,16 @@ export function WorkspaceSwitcher() {
     ? activeBackendId.slice(WORKSPACE_BACKEND_ID_PREFIX.length)
     : null;
   const activeWorkspaceName = workspaces.find(({ id }) => id === activeWorkspaceId)?.name ?? null;
+  const { isReady: environmentsReady } = useEnvironments();
+  const activeRemoteIsGone =
+    environmentsReady &&
+    isRemoteEnvironmentBackendId(activeBackendId) &&
+    !options.some((option) => option.backendId === activeBackendId);
+
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- drops a selection whose remote environment was removed from local storage
+  useEffect(() => {
+    if (activeRemoteIsGone) setActiveBackendId(null);
+  }, [activeRemoteIsGone, setActiveBackendId]);
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- confirms the selected workspace's backend came up, reports a failure, and drops a selection whose workspace is gone
   useEffect(() => {
@@ -185,7 +197,7 @@ export function WorkspaceSwitcher() {
           render={<SidebarMenuButton aria-label="Switch workspace" className="mb-0.5" />}
         >
           <WorkspaceIcon
-            option={activeOption ?? { icon: null, workspaceId: null }}
+            option={activeOption ?? { icon: null, colorKey: null }}
             fallback={<BoxesIcon className="size-4 shrink-0 text-(--sidebar-icon-color)" />}
           />
           <span className="min-w-0 flex-1 truncate">{activeOption?.label}</span>

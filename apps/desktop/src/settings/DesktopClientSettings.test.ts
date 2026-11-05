@@ -77,6 +77,7 @@ const clientSettings: ClientSettings = {
   allWorkspacesIcon: null,
   allWorkspacesName: "",
   workspaceOrder: ["workspace:alpha", "all"],
+  environmentIcons: { "environment-1": { kind: "emoji", emoji: "🧪" } },
   pullRequestMergeMethodOverrides: {},
   timestampFormat: "24-hour",
   wordWrap: true,

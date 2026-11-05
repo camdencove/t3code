@@ -110,6 +110,26 @@ describe("resolveWorkspaceEnvironmentIds", () => {
     },
   );
 
+  it("shows only the chosen environment when a remote environment is selected", () => {
+    const resolved = resolveWorkspaceEnvironmentIds({
+      activeBackendId: `remote:${remoteId}`,
+      primaryEnvironmentId: primaryId,
+      environments,
+      environmentWorkspaces: { [remoteId]: "workspace:alpha" },
+    });
+    expect([...(resolved ?? [])]).toEqual([remoteId]);
+  });
+
+  it("shows nothing for a removed remote environment", () => {
+    const resolved = resolveWorkspaceEnvironmentIds({
+      activeBackendId: "remote:env-gone",
+      primaryEnvironmentId: primaryId,
+      environments,
+      environmentWorkspaces: {},
+    });
+    expect(resolved?.size).toBe(0);
+  });
+
   it("keeps every environment in all workspaces", () => {
     const resolved = resolveWorkspaceEnvironmentIds({
       activeBackendId: null,
@@ -141,7 +161,12 @@ describe("resolveWorkspaceLocalEnvironmentId", () => {
     },
     { name: "a connected workspace", activeBackendId: "workspace:alpha", expected: alphaId },
     { name: "a workspace still starting", activeBackendId: "workspace:beta", expected: null },
-  ])("ignores remote environments for $name", ({ activeBackendId, expected }) => {
+    {
+      name: "a selected remote environment",
+      activeBackendId: `remote:${remoteId}`,
+      expected: remoteId,
+    },
+  ])("resolves the environment for $name", ({ activeBackendId, expected }) => {
     expect(
       resolveWorkspaceLocalEnvironmentId({
         activeBackendId,
@@ -198,6 +223,25 @@ describe("workspaceOptions", () => {
     const options = workspaceOptions(workspaces, builtIn);
     expect(options.map((option) => option.label)).toEqual(labels);
     expect(options.map((option) => option.icon)).toEqual(icons);
+  });
+
+  it("lists remote environments after workspaces, with their saved icons", () => {
+    const options = workspaceOptions(workspaces, { environmentIcons: { [remoteId]: allIcon } }, [
+      { environmentId: remoteId, label: "Box" },
+    ]);
+    expect(options.at(-1)).toEqual({
+      backendId: `remote:${remoteId}`,
+      colorKey: remoteId,
+      icon: allIcon,
+      label: "Box",
+    });
+  });
+
+  it("sorts remote environments with the saved order", () => {
+    const options = workspaceOptions(workspaces, { workspaceOrder: [`remote:${remoteId}`] }, [
+      { environmentId: remoteId, label: "Box" },
+    ]);
+    expect(options[0]?.label).toBe("Box");
   });
 
   it.each([

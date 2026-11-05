@@ -5,16 +5,16 @@ import { cn } from "../lib/utils";
 import { workspaceColorClass, type WorkspaceOption } from "./activeWorkspace";
 
 export function WorkspaceIcon(props: {
-  readonly option: Pick<WorkspaceOption, "icon" | "workspaceId">;
+  readonly option: Pick<WorkspaceOption, "icon" | "colorKey">;
   readonly fallback?: ReactNode;
 }) {
-  const { icon, workspaceId } = props.option;
+  const { icon, colorKey } = props.option;
   if (icon !== null) return <ProjectIconGlyph icon={icon} className="size-4 shrink-0" />;
-  if (workspaceId === null) return props.fallback ?? null;
+  if (colorKey === null) return props.fallback ?? null;
   return (
     <span
       aria-hidden
-      className={cn("size-2.5 shrink-0 rounded-full", workspaceColorClass(workspaceId))}
+      className={cn("size-2.5 shrink-0 rounded-full", workspaceColorClass(colorKey))}
     />
   );
 }

@@ -9,9 +9,8 @@ import {
   resolveWorkspaceEnvironmentIds,
   useActiveWorkspaceBackendId,
   useEnvironmentWorkspaces,
-  workspaceOptions,
+  useWorkspaceOptions,
 } from "./activeWorkspace";
-import { useWorkspacesStore } from "./workspacesStore";
 
 export type WaitingDot = "attention" | "failed" | "unread";
 
@@ -112,7 +111,7 @@ export function rankWaitingWorkspaces<TOption extends { readonly backendId: stri
 
 export function useWaitingScope() {
   const [activeBackendId] = useActiveWorkspaceBackendId();
-  const workspaces = useWorkspacesStore((store) => store.workspaces);
+  const options = useWorkspaceOptions();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
   const { environments } = useEnvironments();
   const environmentWorkspaces = useEnvironmentWorkspaces();
@@ -128,9 +127,7 @@ export function useWaitingScope() {
     }));
   return {
     activeBackendId,
-    backendIds: workspaceOptions(workspaces).flatMap(({ backendId }) =>
-      backendId === null ? [] : [backendId],
-    ),
+    backendIds: options.flatMap(({ backendId }) => (backendId === null ? [] : [backendId])),
     environments,
     environmentWorkspaces,
     primaryEnvironmentId,

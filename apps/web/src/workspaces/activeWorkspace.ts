@@ -33,8 +33,14 @@ export interface WorkspaceOption {
   readonly backendId: string | null;
   readonly icon: ProjectIconOverride | null;
   readonly label: string;
-  readonly workspaceId: string | null;
+  readonly colorKey: string | null;
 }
+
+const REMOTE_ENVIRONMENT_BACKEND_PREFIX = "remote:";
+const remoteEnvironmentBackendId = (environmentId: string) =>
+  `${REMOTE_ENVIRONMENT_BACKEND_PREFIX}${environmentId}`;
+export const isRemoteEnvironmentBackendId = (backendId: string | null) =>
+  backendId?.startsWith(REMOTE_ENVIRONMENT_BACKEND_PREFIX) === true;
 
 interface WorkspaceEnvironment {
   readonly environmentId: EnvironmentId;
@@ -51,6 +57,7 @@ export type BuiltInWorkspaces = Pick<
   | "defaultWorkspaceIcon"
   | "defaultWorkspaceName"
   | "workspaceOrder"
+  | "environmentIcons"
 >;
 
 export const DEFAULT_WORKSPACE_LABEL = "Default";
@@ -79,25 +86,35 @@ export const resolveAllWorkspacesLabel = (name: string) => name.trim() || ALL_WO
 export function workspaceOptions(
   workspaces: ReadonlyArray<DesktopWorkspace>,
   builtIn: Partial<BuiltInWorkspaces> = {},
+  remoteEnvironments: ReadonlyArray<{
+    readonly environmentId: EnvironmentId;
+    readonly label: string;
+  }> = [],
 ): ReadonlyArray<WorkspaceOption> {
   const options = [
     {
       backendId: null,
       icon: builtIn.allWorkspacesIcon ?? null,
       label: resolveAllWorkspacesLabel(builtIn.allWorkspacesName ?? ""),
-      workspaceId: null,
+      colorKey: null,
     },
     {
       backendId: PRIMARY_LOCAL_ENVIRONMENT_ID,
       icon: builtIn.defaultWorkspaceIcon ?? null,
       label: resolveDefaultWorkspaceLabel(builtIn.defaultWorkspaceName ?? ""),
-      workspaceId: null,
+      colorKey: null,
     },
     ...workspaces.map((workspace) => ({
       backendId: workspaceBackendId(workspace),
       icon: workspace.icon,
       label: workspace.name,
-      workspaceId: workspace.id,
+      colorKey: workspace.id,
+    })),
+    ...remoteEnvironments.map(({ environmentId, label }) => ({
+      backendId: remoteEnvironmentBackendId(environmentId),
+      icon: builtIn.environmentIcons?.[environmentId] ?? null,
+      label,
+      colorKey: environmentId,
     })),
   ];
   return orderWorkspaceOptions(options, builtIn.workspaceOrder ?? []);
@@ -134,8 +151,10 @@ export function resolveWorkspaceLocalEnvironmentId(input: {
   const { activeBackendId, primaryEnvironmentId, environments } = input;
   if (activeBackendId === null) return null;
   if (activeBackendId === PRIMARY_LOCAL_ENVIRONMENT_ID) return primaryEnvironmentId;
-  const environment = environments.find(
-    (candidate) => desktopLocalBackendId(candidate.entry.target) === activeBackendId,
+  const environment = environments.find((candidate) =>
+    isRemoteEnvironmentBackendId(activeBackendId)
+      ? remoteEnvironmentBackendId(candidate.environmentId) === activeBackendId
+      : desktopLocalBackendId(candidate.entry.target) === activeBackendId,
   );
   return environment?.environmentId ?? null;
 }
@@ -149,6 +168,9 @@ export function resolveWorkspaceEnvironmentIds(input: {
   const { activeBackendId, environments, environmentWorkspaces } = input;
   if (activeBackendId === null) return null;
   const localEnvironmentId = resolveWorkspaceLocalEnvironmentId(input);
+  if (isRemoteEnvironmentBackendId(activeBackendId)) {
+    return new Set(localEnvironmentId === null ? [] : [localEnvironmentId]);
+  }
   const remoteEnvironmentIds = environments
     .filter((environment) => {
       const assigned = environmentWorkspaces[environment.environmentId];
@@ -181,6 +203,7 @@ const selectBuiltInWorkspaces = (settings: ClientSettings): BuiltInWorkspaces =>
   defaultWorkspaceIcon: settings.defaultWorkspaceIcon,
   defaultWorkspaceName: settings.defaultWorkspaceName,
   workspaceOrder: settings.workspaceOrder,
+  environmentIcons: settings.environmentIcons,
 });
 
 export function useBuiltInWorkspaces(): BuiltInWorkspaces {
@@ -196,7 +219,8 @@ export function useDefaultWorkspaceLabel(): string {
 export function useWorkspaceOptions(): ReadonlyArray<WorkspaceOption> {
   const workspaces = useWorkspacesStore((store) => store.workspaces);
   const builtIn = useBuiltInWorkspaces();
-  return workspaceOptions(workspaces, builtIn);
+  const { environments } = useEnvironments();
+  return workspaceOptions(workspaces, builtIn, environments.filter(isRemoteEnvironment));
 }
 
 export function useEnvironmentWorkspaces(): Readonly<Record<string, string>> {
