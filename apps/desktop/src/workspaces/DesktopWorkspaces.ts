@@ -37,10 +37,10 @@ const { logWarning: logWorkspaceWarning } =
 
 export class DesktopWorkspaceNameError extends Schema.TaggedError<DesktopWorkspaceNameError>()(
   "DesktopWorkspaceNameError",
-  { name: Schema.String },
+  { workspaceName: Schema.String },
 ) {
   override get message(): string {
-    return `Workspace name "${this.name}" is invalid or already in use.`;
+    return `Workspace name "${this.workspaceName}" is invalid or already in use.`;
   }
 }
 
@@ -258,7 +258,7 @@ export const layer = Layer.effect(
           Effect.gen(function* () {
             const current = yield* Ref.get(workspacesRef);
             if (!isWorkspaceNameAvailable(current, name, null)) {
-              return yield* new DesktopWorkspaceNameError({ name });
+              return yield* new DesktopWorkspaceNameError({ workspaceName: name });
             }
             const next = [...current, { id, name: name.trim(), separate: [], env: {}, icon: null }];
             yield* persist(next);
@@ -289,7 +289,7 @@ export const layer = Layer.effect(
               return yield* new DesktopWorkspaceNotFoundError({ id });
             }
             if (!isWorkspaceNameAvailable(current, name, id)) {
-              return yield* new DesktopWorkspaceNameError({ name });
+              return yield* new DesktopWorkspaceNameError({ workspaceName: name });
             }
             const updated = { ...workspace, name: name.trim() };
             const next = current.map((candidate) => (candidate.id === id ? updated : candidate));
